@@ -4,6 +4,8 @@
 
 import { Client, TemporaryFile, QueuedUpload } from "../types/types";
 import cryptoHandler from "./CryptoHandler";
+import { useSettings } from "../context/SettingsContext";
+import notificationSound from "../sounds/notification.mp3";
 
 //Files are sent in chunks of CHUNK_SIZE
 const CHUNK_SIZE = 512 * 1024;
@@ -27,6 +29,9 @@ class SocketHandler {
 	private uploading: boolean = false;
 
 	private autoDownload = false;
+	private soundOnDownload = false;
+
+	private downloadSound = new Audio(notificationSound);
 
 	/*
 	Callback functions so App can receive data
@@ -276,6 +281,10 @@ class SocketHandler {
 						1,
 					);
 
+					if (this.soundOnDownload) {
+						this.playDownloadSound();
+					}
+
 					this.incomingFile = null;
 					this.currentClient = null;
 					this.currentMessageId = undefined;
@@ -348,6 +357,15 @@ class SocketHandler {
 				clientId: clientId,
 			}),
 		);
+	}
+
+	playDownloadSound() {
+		console.log("sound played");
+		this.downloadSound.volume = 0.5;
+		this.downloadSound.currentTime = 0;
+		this.downloadSound.play().catch(() => {
+			"not played";
+		});
 	}
 
 	//Start the process of sending a file to the server
@@ -466,6 +484,10 @@ class SocketHandler {
 
 	setAutoDownload(value: boolean) {
 		this.autoDownload = value;
+	}
+
+	setSoundOnDownload(value: boolean) {
+		this.soundOnDownload = value;
 	}
 
 	/*

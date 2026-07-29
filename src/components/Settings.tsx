@@ -8,8 +8,14 @@ interface Props {
 
 const Settings = ({ clearMessageHistory }: Props) => {
 	const { theme, themeMode, setThemeMode } = useTheme();
-	const { autoDownload, setAutoDownload, showOffline, setShowOffline } =
-		useSettings();
+	const {
+		autoDownload,
+		setAutoDownload,
+		soundOnDownload,
+		setSoundOnDownload,
+		showOffline,
+		setShowOffline,
+	} = useSettings();
 
 	return (
 		<div
@@ -62,7 +68,26 @@ const Settings = ({ clearMessageHistory }: Props) => {
 					</div>
 				</div>
 
-				<div className="d-flex flex-row justify-content-between align-items-center">
+				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
+					<h6 className="fw-normal mb-0">Play sound on download</h6>
+					<div className="form-check form-switch">
+						<input
+							className="form-check-input shadow-none"
+							style={{
+								border: "1px solid #a1a6ac",
+								transform: "scale(1.2)",
+							}}
+							type="checkbox"
+							role="switch"
+							checked={soundOnDownload}
+							onChange={(e) =>
+								setSoundOnDownload(e.target.checked)
+							}
+						/>
+					</div>
+				</div>
+
+				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
 					<h6 className="fw-normal mb-0">Clear all transfer data</h6>
 					<button
 						className="btn btn-outline-danger p-1 px-2"

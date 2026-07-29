@@ -3,6 +3,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 interface SettingsContextType {
 	autoDownload: boolean;
 	setAutoDownload: (autoDownload: boolean) => void;
+	soundOnDownload: boolean;
+	setSoundOnDownload: (soundOnDownload: boolean) => void;
 	showOffline: boolean | true;
 	setShowOffline: (showOffline: boolean) => void;
 }
@@ -20,6 +22,10 @@ export const SettingsProvider = ({
 		() => localStorage.getItem("autoDownload") == "true",
 	);
 
+	const [soundOnDownload, setSoundOnDownload] = useState<boolean>(
+		() => localStorage.getItem("soundOnDownload") == "true",
+	);
+
 	const [showOffline, setShowOffline] = useState<boolean>(
 		() => localStorage.getItem("showOffline") != "false",
 	);
@@ -28,11 +34,21 @@ export const SettingsProvider = ({
 		localStorage.setItem("autoDownload", String(autoDownload));
 	}, [autoDownload]);
 
+	useEffect(() => {
+		localStorage.setItem("soundOnDownload", String(soundOnDownload));
+	}, [soundOnDownload]);
+
+	useEffect(() => {
+		localStorage.setItem("showOffline", String(showOffline));
+	}, [showOffline]);
+
 	return (
 		<SettingsContext.Provider
 			value={{
 				autoDownload,
 				setAutoDownload,
+				soundOnDownload,
+				setSoundOnDownload,
 				showOffline,
 				setShowOffline,
 			}}

@@ -54,7 +54,7 @@ const App = () => {
 	const [pairingCode, setPairingCode] = useState(0);
 	const [name, setName] = useState(localStorage.getItem("displayName") ?? "");
 
-	const { autoDownload } = useSettings();
+	const { autoDownload, soundOnDownload } = useSettings();
 
 	//Add a new message to a conversation, creating one if there is not already
 	const addMessage = (client: Client, message: Message) => {
@@ -500,6 +500,10 @@ const App = () => {
 	useEffect(() => {
 		socketHandler.setAutoDownload(autoDownload);
 	}, [autoDownload]);
+
+	useEffect(() => {
+		socketHandler.setSoundOnDownload(soundOnDownload);
+	}, [soundOnDownload]);
 
 	// const testClients: Client[] = [
 	// 	{ id: "1", name: "Beautiful Starling", online: true },
