@@ -1,12 +1,18 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+	act,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 import PairingMenu from "./PairingMenu";
 import { Message, Conversation } from "../types/types";
 import MessageDisplay from "./MessageDisplay";
 import Settings from "./Settings";
-import { ThemeMode, useTheme } from "../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 
 interface Props {
-	activePanel: "none" | "pairing" | "settings";
+	activePanel: "none" | "pairing" | "settings" | "contact";
 	pairingCode: number;
 	generatePairingCode: () => void;
 	connectWithClient: (pairingCode: string) => void;
@@ -51,7 +57,7 @@ const MainContent = ({
 				/>
 			) : activePanel == "settings" ? (
 				<Settings clearMessageHistory={clearMessageHistory} />
-			) : (
+			) : activePanel == "contact" ? (
 				<div
 					className="d-flex flex-column overflow-auto p-5 w-100"
 					ref={containerRef}
@@ -62,6 +68,7 @@ const MainContent = ({
 							<MessageDisplay
 								isIncoming={msg.sender != undefined}
 								filename={msg.filename}
+								filesize={msg.filesize}
 								timestamp={msg.timestamp}
 								downloadUrl={msg.downloadUrl ?? ""}
 								status={msg.status}
@@ -122,6 +129,8 @@ const MainContent = ({
 						/>
 					</label>
 				</div>
+			) : (
+				""
 			)}
 		</div>
 	);

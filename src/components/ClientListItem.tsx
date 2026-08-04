@@ -13,7 +13,7 @@ const ClientListItem = ({ client, selected, onClick, onDelete }: Props) => {
 	const [isHovered, setIsHovered] = useState(false);
 	const [isDeleteHovered, setIsDeleteHovered] = useState(false);
 
-	const { theme, themeMode } = useTheme();
+	const { theme } = useTheme();
 
 	return (
 		<li

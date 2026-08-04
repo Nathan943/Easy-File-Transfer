@@ -8,6 +8,7 @@ import socketHandler from "./handlers/SocketHandler";
 import fileStorageHandler from "./handlers/FileStorageHandler";
 import cryptoHandler from "./handlers/CryptoHandler";
 import { useSettings } from "./context/SettingsContext";
+import DropOverlay from "./components/DropOverlay";
 
 const App = () => {
 	//List of connected clients, stored as name and id
@@ -32,7 +33,7 @@ const App = () => {
 
 	//For the MainContent component to decide whether to show the pairing menu or not
 	const [activePanel, setActivePanel] = useState<
-		"none" | "pairing" | "settings"
+		"none" | "pairing" | "settings" | "contact"
 	>("none");
 
 	//Hold all conversations, storing id and messages
@@ -53,6 +54,8 @@ const App = () => {
 	//Pairing code from websocket server
 	const [pairingCode, setPairingCode] = useState(0);
 	const [name, setName] = useState(localStorage.getItem("displayName") ?? "");
+
+	const [dragging, setDragging] = useState(false);
 
 	const { autoDownload, soundOnDownload } = useSettings();
 
@@ -133,6 +136,7 @@ const App = () => {
 			id: crypto.randomUUID(),
 			sender: client,
 			filename: file.name,
+			filesize: file.size,
 			downloadUrl: URL.createObjectURL(file),
 			timestamp: new Date(timestamp).toLocaleString(),
 			status: "sent",
@@ -151,6 +155,7 @@ const App = () => {
 			id: messageId ?? crypto.randomUUID(),
 			sender: client,
 			filename: file.name,
+			filesize: file.size,
 			timestamp: "",
 			status: "sending",
 			...(downloadUrl != undefined && { downloadUrl }),
@@ -265,6 +270,26 @@ const App = () => {
 		socketHandler.deleteClient(client.id);
 	};
 
+	const handleFileUpload = async (file: File) => {
+		const message = buildTemporaryMessage(
+			{
+				name: file.name,
+				type: file.type,
+				size: file.size,
+				chunks: [],
+			},
+			undefined,
+			undefined,
+			URL.createObjectURL(file),
+		);
+
+		await fileStorageHandler.addFile(message.id, file);
+
+		addMessage(selectedClient, message);
+
+		socketHandler.send(file, selectedClient, message.id);
+	};
+
 	//Update local storage when a new contact is added
 	useEffect(() => {
 		localStorage.setItem("contacts", JSON.stringify(clients));
@@ -290,6 +315,7 @@ const App = () => {
 				id: message.id,
 				sender: message.sender,
 				filename: message.filename,
+				filesize: message.filesize,
 				timestamp: message.timestamp,
 				status: message.status,
 				progress: message.progress,
@@ -306,6 +332,64 @@ const App = () => {
 	useEffect(() => {
 		localStorage.setItem("displayName", name);
 	}, [name]);
+
+	useEffect(() => {
+		const onDragEnter = (e: DragEvent) => {
+			if (activePanel != "contact") return;
+
+			e.preventDefault();
+
+			if (e.dataTransfer?.types.includes("Files")) {
+				setDragging(true);
+			}
+		};
+
+		const onDragOver = (e: DragEvent) => {
+			if (activePanel != "contact") return;
+
+			e.preventDefault();
+		};
+
+		const onDragLeave = (e: DragEvent) => {
+			if (activePanel != "contact") return;
+
+			e.preventDefault();
+
+			if (
+				e.clientX <= 0 ||
+				e.clientY <= 0 ||
+				e.clientX >= window.innerWidth ||
+				e.clientY >= window.innerHeight
+			) {
+				setDragging(false);
+			}
+		};
+
+		const onDrop = (e: DragEvent) => {
+			if (activePanel != "contact") return;
+
+			e.preventDefault();
+
+			const files = Array.from(e.dataTransfer?.files ?? []);
+			for (const file of files) {
+				handleFileUpload(file);
+			}
+
+			setDragging(false);
+		};
+
+		window.addEventListener("dragenter", onDragEnter);
+		window.addEventListener("dragover", onDragOver);
+		window.addEventListener("dragleave", onDragLeave);
+		window.addEventListener("drop", onDrop);
+
+		return () => {
+			window.removeEventListener("dragenter", onDragEnter);
+			window.removeEventListener("dragover", onDragOver);
+			window.removeEventListener("dragleave", onDragLeave);
+			window.removeEventListener("drop", onDrop);
+		};
+	}, [activePanel]);
 
 	//Update document title when selectedClient is changed
 	useEffect(() => {
@@ -541,16 +625,24 @@ const App = () => {
 	return (
 		<div className="d-flex flex-column vh-100">
 			<div className="d-flex flex-grow-1">
+				{dragging && selectedClient.id != "" && <DropOverlay />}
 				<Sidebar
 					clients={clients}
 					name={name}
 					editName={editName}
 					onSelectClient={(client) => {
 						setSelectedClient(client);
-						setActivePanel("none");
+						console.log("set");
+						setActivePanel("contact");
 					}}
-					togglePairing={() => setActivePanel("pairing")}
-					toggleSettings={() => setActivePanel("settings")}
+					togglePairing={() => {
+						setSelectedClient({ name: "", id: "", online: false });
+						setActivePanel("pairing");
+					}}
+					toggleSettings={() => {
+						setSelectedClient({ name: "", id: "", online: false });
+						setActivePanel("settings");
+					}}
 					deleteClient={deleteClient}
 				/>
 
@@ -560,23 +652,7 @@ const App = () => {
 					generatePairingCode={socketHandler.getPairingCode}
 					connectWithClient={socketHandler.connectWithClient}
 					onFileSelect={async (file) => {
-						const message = buildTemporaryMessage(
-							{
-								name: file.name,
-								type: file.type,
-								size: file.size,
-								chunks: [],
-							},
-							undefined,
-							undefined,
-							URL.createObjectURL(file),
-						);
-
-						await fileStorageHandler.addFile(message.id, file);
-
-						addMessage(selectedClient, message);
-
-						socketHandler.send(file, selectedClient, message.id);
+						await handleFileUpload(file);
 					}}
 					messages={getMessages()}
 					isOnline={selectedClient.online}

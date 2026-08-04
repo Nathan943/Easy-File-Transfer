@@ -1,9 +1,23 @@
 import React from "react";
 import { ThemeMode, useTheme } from "../context/ThemeContext";
 
+function formatFileSize(bytes?: number): string {
+	if (bytes == null || Number.isNaN(bytes)) {
+		return "Unknown size";
+	}
+
+	if (bytes === 0) return "0 B";
+
+	const units = ["B", "KB", "MB", "GB", "TB"];
+	const i = Math.floor(Math.log(bytes) / Math.log(1024));
+
+	return `${(bytes / Math.pow(1024, i)).toFixed(i == 0 ? 0 : 1)} ${units[i]}`;
+}
+
 interface Props {
 	isIncoming: boolean;
 	filename: string;
+	filesize: number;
 	timestamp: string;
 	downloadUrl: string;
 	status: "sending" | "sent" | "failed";
@@ -13,6 +27,7 @@ interface Props {
 const MessageDisplay = ({
 	isIncoming,
 	filename,
+	filesize,
 	timestamp,
 	downloadUrl,
 	status,
@@ -41,6 +56,7 @@ const MessageDisplay = ({
 					>
 						{filename}
 					</h6>
+					<p className="mb-0">{formatFileSize(filesize)}</p>
 					<p className="mb-0">
 						{status == "failed"
 							? "Failed to send"
@@ -66,7 +82,7 @@ const MessageDisplay = ({
 							/>
 
 							<rect
-								width={(progress ?? 0) * 400}
+								width={Math.max(progress ?? 0, 0.04) * 400}
 								height="20"
 								rx="10"
 								ry="10"

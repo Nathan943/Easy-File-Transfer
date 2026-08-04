@@ -69,7 +69,9 @@ const Settings = ({ clearMessageHistory }: Props) => {
 				</div>
 
 				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
-					<h6 className="fw-normal mb-0">Play sound on download</h6>
+					<h6 className="fw-normal mb-0">
+						Play sound on receiving files
+					</h6>
 					<div className="form-check form-switch">
 						<input
 							className="form-check-input shadow-none"

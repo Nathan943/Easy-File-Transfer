@@ -18,7 +18,7 @@ const ClientList = ({
 }: Props) => {
 	const [selectedIndex, setSelectedIndex] = useState(-1);
 
-	const { showOffline, setShowOffline } = useSettings();
+	const { showOffline } = useSettings();
 
 	useEffect(() => {
 		setSelectedIndex(-1);

@@ -2,6 +2,7 @@ export interface Message {
 	id: string;
 	sender?: Client;
 	filename: string;
+	filesize: number;
 	downloadUrl?: string;
 	timestamp: string;
 	status: "sending" | "sent" | "failed";

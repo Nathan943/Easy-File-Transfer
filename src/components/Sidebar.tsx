@@ -26,7 +26,6 @@ const Sidebar = ({
 	toggleSettings,
 }: Props) => {
 	const [deselect, setDeselect] = useState(0);
-	const { theme } = useTheme();
 
 	return (
 		<div
