@@ -24,7 +24,7 @@ export interface TemporaryFile {
 	name: string;
 	type: string;
 	size: number;
-	chunks: Blob[];
+	chunks: BlobPart[];
 }
 
 export interface OutgoingFileMeta {
@@ -47,4 +47,12 @@ export interface QueuedUpload {
 export interface EncryptedFileData {
 	file: File;
 	iv: string;
+}
+
+export interface IncomingTransfer {
+	client: Client;
+	iv: string;
+	file: TemporaryFile;
+	receivedBytes: number;
+	receivedChunks: number;
 }

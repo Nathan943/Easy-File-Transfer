@@ -82,7 +82,11 @@ const MessageDisplay = ({
 							/>
 
 							<rect
-								width={Math.max(progress ?? 0, 0.04) * 400}
+								//Clamp the progress bar at both ends
+								width={
+									Math.min(Math.max(progress ?? 0, 0.04), 1) *
+									400
+								}
 								height="20"
 								rx="10"
 								ry="10"

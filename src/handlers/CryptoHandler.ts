@@ -1,5 +1,7 @@
 import { EncryptedFileData } from "../types/types";
 
+const CHUNK_SIZE = 1024 * 1024;
+
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
 	const bytes = new Uint8Array(buffer);
 	let binary = "";
@@ -99,38 +101,50 @@ class CryptoHandler {
 		);
 	}
 
-	async encryptFile(
-		file: File,
-		targetClientId: string,
-	): Promise<EncryptedFileData> {
-		const otherPublicKey = this.otherPublicKeys.get(targetClientId);
-
-		if (!otherPublicKey) {
-			throw new Error("Other public key not found");
-		}
-
-		const aesKey = await this.deriveSharedKey(otherPublicKey);
-		const fileBuffer = await file.arrayBuffer();
-		const iv = crypto.getRandomValues(new Uint8Array(12));
-
-		const encrypted = await crypto.subtle.encrypt(
-			{ name: "AES-GCM", iv },
-			aesKey,
-			fileBuffer,
-		);
-
-		const encryptedFile = new File([encrypted], file.name, {
-			type: file.type,
-		});
-
-		return { file: encryptedFile, iv: arrayBufferToBase64(iv.buffer) };
+	getBaseIv(): Uint8Array<ArrayBuffer> {
+		return crypto.getRandomValues(new Uint8Array(12));
 	}
 
-	async decryptFile(
-		encryptedFile: File,
-		ivBase64: string,
+	toBase64(iv: Uint8Array) {
+		return arrayBufferToBase64(iv.buffer as ArrayBuffer);
+	}
+
+	private makeIv(
+		baseIV: Uint8Array<ArrayBuffer>,
+		chunkNumber: number,
+	): Uint8Array<ArrayBuffer> {
+		const iv = new Uint8Array(baseIV);
+
+		const view = new DataView(iv.buffer, iv.byteOffset, iv.byteLength);
+
+		view.setUint32(8, chunkNumber, false);
+
+		return iv;
+	}
+
+	async encryptChunk(
+		chunk: ArrayBuffer,
 		targetClientId: string,
-	): Promise<File> {
+		baseIv: Uint8Array<ArrayBuffer>,
+		chunkNumber: number,
+	): Promise<ArrayBuffer> {
+		const otherPublicKey = this.otherPublicKeys.get(targetClientId);
+
+		if (!otherPublicKey) throw new Error("Other public key not found");
+
+		const aesKey = await this.deriveSharedKey(otherPublicKey);
+
+		const iv = this.makeIv(baseIv, chunkNumber);
+
+		return crypto.subtle.encrypt({ name: "AES-GCM", iv }, aesKey, chunk);
+	}
+
+	async decryptChunk(
+		encryptedChunk: ArrayBuffer,
+		targetClientId: string,
+		ivBase64: string,
+		chunkNumber: number,
+	): Promise<ArrayBuffer> {
 		const otherPublicKey = this.otherPublicKeys.get(targetClientId);
 
 		if (!otherPublicKey) {
@@ -138,20 +152,18 @@ class CryptoHandler {
 		}
 
 		const aesKey = await this.deriveSharedKey(otherPublicKey);
-		const iv = new Uint8Array(base64ToArrayBuffer(ivBase64));
 
-		const decryptedBuffer = await crypto.subtle.decrypt(
+		const baseIv = new Uint8Array(base64ToArrayBuffer(ivBase64));
+		const iv = this.makeIv(baseIv, chunkNumber);
+
+		return await crypto.subtle.decrypt(
 			{
 				name: "AES-GCM",
 				iv,
 			},
 			aesKey,
-			await encryptedFile.arrayBuffer(),
+			encryptedChunk,
 		);
-
-		return new File([decryptedBuffer], encryptedFile.name, {
-			type: encryptedFile.type,
-		});
 	}
 
 	//Connect to the database

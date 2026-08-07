@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import Header from "./components/Header";
-import Name from "./components/Name";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
 import { Message, Conversation, Client, TemporaryFile } from "./types/types";
@@ -287,7 +285,7 @@ const App = () => {
 
 		addMessage(selectedClient, message);
 
-		socketHandler.send(file, selectedClient, message.id);
+		await socketHandler.send(file, selectedClient, message.id);
 	};
 
 	//Update local storage when a new contact is added
@@ -365,14 +363,14 @@ const App = () => {
 			}
 		};
 
-		const onDrop = (e: DragEvent) => {
+		const onDrop = async (e: DragEvent) => {
 			if (activePanel != "contact") return;
 
 			e.preventDefault();
 
 			const files = Array.from(e.dataTransfer?.files ?? []);
 			for (const file of files) {
-				handleFileUpload(file);
+				await handleFileUpload(file);
 			}
 
 			setDragging(false);

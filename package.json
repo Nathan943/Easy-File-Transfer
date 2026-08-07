@@ -1,37 +1,39 @@
 {
-  "name": "easy-file-transfer-website",
-  "version": "1.0.0",
-  "description": "��#\u0000 \u0000e\u0000a\u0000s\u0000y\u0000-\u0000f\u0000i\u0000l\u0000e\u0000-\u0000t\u0000r\u0000a\u0000n\u0000s\u0000f\u0000e\u0000r\u0000-\u0000w\u0000e\u0000b\u0000s\u0000i\u0000t\u0000e\u0000\r\u0000 \u0000",
-  "main": "vite.config.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "vite --host",
-    "build": "vite build"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Nathan943/easy-file-transfer-website.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/Nathan943/easy-file-transfer-website/issues"
-  },
-  "homepage": "https://github.com/Nathan943/easy-file-transfer-website#readme",
-  "devDependencies": {
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.2",
-    "typescript": "^6.0.3",
-    "vite": "^8.0.13"
-  },
-  "dependencies": {
-    "bootstrap": "^5.3.8",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-dropzone": "^20.0.0",
-    "ws": "^8.x.x"
-  }
+	"name": "easy-file-transfer-website",
+	"version": "1.0.0",
+	"description": "��#\u0000 \u0000e\u0000a\u0000s\u0000y\u0000-\u0000f\u0000i\u0000l\u0000e\u0000-\u0000t\u0000r\u0000a\u0000n\u0000s\u0000f\u0000e\u0000r\u0000-\u0000w\u0000e\u0000b\u0000s\u0000i\u0000t\u0000e\u0000\r\u0000 \u0000",
+	"main": "vite.config.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"dev": "vite --host",
+		"build": "vite build"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Nathan943/easy-file-transfer-website.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "module",
+	"bugs": {
+		"url": "https://github.com/Nathan943/easy-file-transfer-website/issues"
+	},
+	"homepage": "https://github.com/Nathan943/easy-file-transfer-website#readme",
+	"devDependencies": {
+		"@types/node": "^26.1.2",
+		"@types/react": "^19.2.14",
+		"@types/react-dom": "^19.2.3",
+		"@types/ws": "^8.18.1",
+		"@vitejs/plugin-react": "^6.0.2",
+		"typescript": "^6.0.3",
+		"vite": "^8.0.13"
+	},
+	"dependencies": {
+		"bootstrap": "^5.3.8",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"react-dropzone": "^20.0.0",
+		"ws": "^8.21.2"
+	}
 }

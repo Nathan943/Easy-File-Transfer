@@ -2,13 +2,12 @@
     Client application for the file transfer system
 */
 
-import { Client, TemporaryFile, QueuedUpload } from "../types/types";
+import { Client, TemporaryFile, IncomingTransfer } from "../types/types";
 import cryptoHandler from "./CryptoHandler";
-import { useSettings } from "../context/SettingsContext";
 import notificationSound from "../sounds/notification.mp3";
 
 //Files are sent in chunks of CHUNK_SIZE
-const CHUNK_SIZE = 512 * 1024;
+const CHUNK_SIZE = 1024 * 1024;
 
 //Handle everything to do with the connection to the server and other clients
 class SocketHandler {
@@ -19,19 +18,14 @@ class SocketHandler {
 	private clientId = "";
 
 	//Stores the client a file is being sent from
-	private currentClient: Client | null = null;
-	private incomingFile: TemporaryFile | null = null;
-	private currentMessageId: string | undefined;
-	private incomingIv: string | null = null;
-
-	//Files are put into a queue when sending to another client
-	private uploadQueue: QueuedUpload[] = [];
-	private uploading: boolean = false;
+	private incomingTransfers = new Map<string, IncomingTransfer>();
 
 	private autoDownload = false;
 	private soundOnDownload = false;
 
 	private downloadSound = new Audio(notificationSound);
+
+	private decoder = new TextDecoder();
 
 	/*
 	Callback functions so App can receive data
@@ -90,19 +84,84 @@ class SocketHandler {
 		this.socket.addEventListener("message", async (msg) => {
 			//Check for raw file data first
 			if (typeof msg.data !== "string") {
-				if (!this.incomingFile) return;
+				const bytes = new Uint8Array(await msg.data.arrayBuffer());
 
-				this.incomingFile.chunks.push(msg.data);
+				const messageId = this.decoder.decode(bytes.subarray(0, 36));
 
-				if (!this.currentMessageId) return;
+				const transfer = this.incomingTransfers.get(messageId);
+				if (!transfer) return;
 
-				const progress =
-					(this.incomingFile.chunks.length * CHUNK_SIZE) /
-					this.incomingFile.size;
-				this.updateProgressBarCallback?.(
-					this.currentMessageId,
-					progress,
+				const chunk = bytes.slice(36);
+				const decryptedChunk = await cryptoHandler.decryptChunk(
+					chunk.buffer,
+					transfer.client.id,
+					transfer.iv,
+					transfer.receivedChunks,
 				);
+
+				transfer.file.chunks.push(decryptedChunk);
+
+				transfer.receivedChunks++;
+
+				transfer.receivedBytes += decryptedChunk.byteLength;
+
+				if (transfer.receivedBytes >= transfer.file.size) {
+					//Reconstruct a file now that all information has been sent, and send the file to App
+					const client = transfer.client;
+					const file = transfer.file;
+
+					const reconstructedBlob = new Blob(file.chunks, {
+						type: file.type,
+					});
+
+					const reconstructedFile = new File(
+						[reconstructedBlob],
+						file.name,
+						{ type: file.type },
+					);
+
+					console.log(
+						"Expected:",
+						transfer.file.size,
+						"Received:",
+						reconstructedFile.size,
+					);
+
+					this.onFileReceivedCallback?.(
+						client,
+						reconstructedFile,
+						messageId,
+					);
+
+					//Check if the automatic download settings is enabled, and if so download a copy immediately
+					if (this.autoDownload) {
+						const url = URL.createObjectURL(reconstructedFile);
+
+						const a = document.createElement("a");
+						a.href = url;
+						a.download = reconstructedFile.name;
+						a.style.display = "none";
+
+						document.body.appendChild(a);
+						a.click();
+						document.body.removeChild(a);
+
+						setTimeout(() => URL.revokeObjectURL(url), 1000);
+					}
+
+					this.updateProgressBarCallback?.(messageId, 1);
+
+					if (this.soundOnDownload) {
+						this.playDownloadSound();
+					}
+
+					this.incomingTransfers.delete(messageId);
+				} else {
+					const progress =
+						(transfer.file.chunks.length * CHUNK_SIZE) /
+						transfer.file.size;
+					this.updateProgressBarCallback?.(messageId, progress);
+				}
 
 				return;
 			}
@@ -141,14 +200,14 @@ class SocketHandler {
 					break;
 
 				case "CLIENT_STATUS_CHANGE":
-					if (
-						parsedMessage.clientId == this.currentClient?.id &&
-						parsedMessage.online == false &&
-						this.currentMessageId
-					) {
-						this.uploading = false;
-						this.onFileFailedCallback?.(this.currentMessageId);
-						this.processQueue();
+					if (!parsedMessage.online) {
+						for (const [messageId, transfer] of this
+							.incomingTransfers) {
+							if (transfer.client.id == parsedMessage.clientId) {
+								this.onFileFailedCallback?.(messageId);
+								this.incomingTransfers.delete(messageId);
+							}
+						}
 					}
 
 					//Change online status for a client in App
@@ -175,8 +234,11 @@ class SocketHandler {
 					break;
 
 				case "CLIENT_REMOVED":
-					if (parsedMessage.clientId == this.currentClient?.id) {
-						this.currentClient = null;
+					for (const [messageId, transfer] of this
+						.incomingTransfers) {
+						if (transfer.client.id == parsedMessage.clientId) {
+							this.incomingTransfers.delete(messageId);
+						}
 					}
 
 					this.onClientRemovedCallback?.(parsedMessage.clientId);
@@ -202,105 +264,35 @@ class SocketHandler {
 
 				case "FILE_META":
 					console.log("meta received");
-					//Don't log new metadata if a file is still being sent
-					if (this.incomingFile) break;
 
-					//Log client
-					this.currentClient = parsedMessage.client;
-
-					//Log metadata
-					this.incomingFile = {
+					const incomingFile = {
 						name: parsedMessage.name,
 						type: parsedMessage.type,
 						size: parsedMessage.size,
 						chunks: [],
 					};
-					this.incomingIv = parsedMessage.iv;
 
-					if (!this.currentClient) break;
-					if (!this.incomingFile) break;
+					//Log metadata
+					this.incomingTransfers.set(parsedMessage.messageId, {
+						client: parsedMessage.client,
+						iv: parsedMessage.iv,
+						file: incomingFile,
+						receivedBytes: 0,
+						receivedChunks: 0,
+					});
+
+					console.log("Message ID:", parsedMessage.messageId);
 
 					this.onMetaReceivedCallback?.(
-						this.currentClient,
-						this.incomingFile,
+						parsedMessage.client,
+						incomingFile,
 						parsedMessage.messageId,
 					);
-
-					this.currentMessageId = parsedMessage.messageId;
-					break;
-
-				case "FILE_END":
-					//Reconstruct a file now that all information has been sent, and send the file to App
-					if (!this.incomingFile) break;
-					if (!this.currentClient) break;
-					if (!this.incomingIv) break;
-
-					const reconstructedBlob = new Blob(
-						this.incomingFile.chunks,
-						{
-							type: this.incomingFile.type,
-						},
-					);
-
-					const reconstructedFile = new File(
-						[reconstructedBlob],
-						this.incomingFile.name,
-						{ type: this.incomingFile.type },
-					);
-
-					const decryptedFile = await cryptoHandler.decryptFile(
-						reconstructedFile,
-						this.incomingIv,
-						this.currentClient.id,
-					);
-
-					this.onFileReceivedCallback?.(
-						this.currentClient,
-						decryptedFile,
-						parsedMessage.messageId,
-					);
-
-					//Check if the automatic download settings is enabled, and if so download a copy immediately
-					if (this.autoDownload) {
-						const url = URL.createObjectURL(decryptedFile);
-
-						const a = document.createElement("a");
-						a.href = url;
-						a.download = decryptedFile.name;
-						a.style.display = "none";
-
-						document.body.appendChild(a);
-						a.click();
-						document.body.removeChild(a);
-
-						setTimeout(() => URL.revokeObjectURL(url), 1000);
-					}
-
-					this.updateProgressBarCallback?.(
-						parsedMessage.messageId,
-						1,
-					);
-
-					if (this.soundOnDownload) {
-						this.playDownloadSound();
-					}
-
-					this.incomingFile = null;
-					this.currentClient = null;
-					this.currentMessageId = undefined;
-					this.incomingIv = null;
 
 					break;
 
 				case "FILE_FAILED":
-					this.uploading = false;
 					this.onFileFailedCallback?.(parsedMessage.messageId);
-					this.processQueue();
-					break;
-				case "FILE_SENT":
-					this.uploading = false;
-					this.onFileSentCallback?.(parsedMessage.messageId);
-					this.processQueue();
 					break;
 			}
 		});
@@ -370,13 +362,15 @@ class SocketHandler {
 
 	//Start the process of sending a file to the server
 	async send(file: File, targetClient: Client, messageId: string) {
-		if (!file) return;
-		if (!targetClient) return;
+		if (
+			!file ||
+			!targetClient ||
+			!this.socket ||
+			this.socket.readyState != WebSocket.OPEN
+		)
+			return;
 
-		const encryptedData = await cryptoHandler.encryptFile(
-			file,
-			targetClient.id,
-		);
+		const baseIv = cryptoHandler.getBaseIv();
 
 		// const url = URL.createObjectURL(encryptedData.file);
 
@@ -387,99 +381,70 @@ class SocketHandler {
 
 		// URL.revokeObjectURL(url);
 
-		//Add file to a queue
-		this.uploadQueue.push({
-			file: encryptedData.file,
-			iv: encryptedData.iv,
-			targetClient,
-			messageId,
-		});
-		console.log("upload added to queue");
-
-		//Process queue one file at a time
-		this.processQueue();
-	}
-
-	//Process the file queue
-	private processQueue() {
-		if (this.uploading) return;
-		if (this.uploadQueue.length == 0) return;
-
-		//Get next file in line and send it
-		const uploadData = this.uploadQueue.shift();
-		if (!uploadData) return;
-
-		this.uploading = true;
-
-		this.sendFile(uploadData);
-	}
-
-	//Send file in chunks
-	private sendFile(uploadData: QueuedUpload) {
-		console.log("file sending");
-
-		//Keep track of how much of the file has been sent
-		let counter = 0;
-
-		const file = uploadData.file;
-
-		//Send metadata first
-		this.socket?.send(
+		this.socket.send(
 			JSON.stringify({
 				signal: "FILE_META",
-				iv: uploadData.iv,
+				iv: cryptoHandler.toBase64(baseIv),
 				name: file.name,
 				type: file.type,
 				size: file.size,
-				targetClientId: uploadData.targetClient.id,
-				messageId: uploadData.messageId,
+				targetClientId: targetClient.id,
+				messageId: messageId,
 			}),
 		);
 
-		const sendChunk = () => {
-			//If the connection to the server closes stop uploading
-			if (!this.socket || this.socket.readyState != WebSocket.OPEN) {
-				this.uploading = false;
-				return;
-			}
+		const encoder = new TextEncoder();
+		const idBytes = encoder.encode(messageId.padEnd(36));
 
-			if (this.uploading == false) return;
+		let counter = 0;
+		let chunkNumber = 0;
 
-			//Loop through every full chunk and send it
-			//Then send the last partial chunk
-			if (counter + CHUNK_SIZE < file.size) {
-				//Get chunk and send
-				console.log("chunk sent");
+		try {
+			while (counter < file.size) {
+				const end = Math.min(counter + CHUNK_SIZE, file.size);
 
-				const chunk = file.slice(counter, counter + CHUNK_SIZE);
-				this.socket?.send(chunk);
+				const chunk = file.slice(counter, end);
 
-				counter += CHUNK_SIZE;
+				const encryptedChunk = await cryptoHandler.encryptChunk(
+					await chunk.arrayBuffer(),
+					targetClient.id,
+					baseIv,
+					chunkNumber,
+				);
 
-				const progress = counter / file.size;
+				const encryptedBytes = new Uint8Array(encryptedChunk);
+
+				const packet = new Uint8Array(
+					idBytes.length + encryptedBytes.length,
+				);
+
+				packet.set(idBytes);
+				packet.set(encryptedBytes, idBytes.length);
+
+				while (this.socket.bufferedAmount > 4 * 1024 * 1024) {
+					await new Promise((resolve) => setTimeout(resolve, 1));
+				}
+
+				if (this.socket.readyState != WebSocket.OPEN) {
+					this.onFileFailedCallback?.(messageId);
+					return;
+				}
+				this.socket.send(packet);
+
+				counter = end;
+				chunkNumber++;
+
 				this.updateProgressBarCallback?.(
-					uploadData.messageId,
-					progress,
-				);
-
-				setTimeout(sendChunk, 0);
-			} else {
-				//Send the last chunk, which is not a full 128kb
-				const last = file.slice(counter, file.size);
-				this.socket?.send(last);
-				console.log("finished");
-
-				//Send end signal
-				this.socket?.send(
-					JSON.stringify({
-						signal: "FILE_END",
-						messageId: uploadData.messageId,
-					}),
+					messageId,
+					counter / file.size,
 				);
 			}
-		};
 
-		sendChunk();
+			this.onFileSentCallback?.(messageId);
+		} catch (err) {
+			console.error(err);
+			this.onFileFailedCallback?.(messageId);
+		}
 	}
 
 	setAutoDownload(value: boolean) {
