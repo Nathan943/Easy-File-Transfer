@@ -65,9 +65,8 @@ class SocketHandler {
 	private onConnectionStatusChangeCallback?: (connected: boolean) => void;
 
 	//Initialize WebSocket connection
-	connect(clientId: string) {
+	connect(authToken: string | null) {
 		this.socket = new WebSocket("ws://localhost:8080");
-		this.clientId = clientId;
 
 		//Connect to the server and tell it that this client is online
 		this.socket.addEventListener("open", async () => {
@@ -78,7 +77,7 @@ class SocketHandler {
 			this.socket?.send(
 				JSON.stringify({
 					signal: "ON_CLIENT_CONNECT",
-					targetClientId: this.clientId,
+					authToken,
 					publicKey: await cryptoHandler.exportPublicKey(),
 				}),
 			);
@@ -182,7 +181,12 @@ class SocketHandler {
 					const pairingCode = parsedMessage.pairingCode;
 					this.onPairCodeReceivedCallback?.(pairingCode);
 					break;
-				case "CLIENT_NAME":
+				case "CLIENT_INFO":
+					this.clientId = parsedMessage.clientId;
+
+					localStorage.setItem("clientId", parsedMessage.clientId);
+					localStorage.setItem("authToken", parsedMessage.authToken);
+
 					//Display name in App
 					this.onNameReceivedCallback?.(
 						parsedMessage.name,

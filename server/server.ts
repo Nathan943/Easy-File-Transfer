@@ -10,6 +10,8 @@ const clientAndNames = new Map<string, string>();
 const pairingCodes = new Map<string, string>();
 const sessions = new Map<string, Set<string>>();
 
+const authTokens = new Map<string, string>();
+
 const publicKeys = new Map<string, string>();
 
 const adjectives = (await fs.readFile("../src/names/adjectives.txt", "utf-8"))
@@ -146,31 +148,49 @@ wss.on("connection", function connection(ws) {
 				);
 
 				//Log the session that just connected
-				id = parsedMessage.targetClientId;
+				if (parsedMessage.authToken != null) {
+					for (const [clientId, token] of authTokens) {
+						if (token == parsedMessage.authToken) {
+							id = clientId;
+							break;
+						}
+					}
 
-				//Log the client's public key
-				publicKeys.set(id, parsedMessage.publicKey);
+					if (!id) {
+						ws.close();
+						break;
+					}
+				} else {
+					//Generate user id and auth token
+					const authToken = crypto.randomUUID();
+					id = crypto.randomUUID();
 
-				if (!clients.has(id)) {
-					clients.set(id, new Set());
-				}
+					//Log this user id
+					authTokens.set(id, authToken);
 
-				clients.get(id)?.add(ws);
-
-				//Generate a name, store it, and send it to the client
-				if (!clientAndNames.has(id)) {
+					//Generate a name for the new user
 					const name = generateName();
 					clientAndNames.set(id, name);
 
 					await saveData();
-
-					ws.send(
-						JSON.stringify({
-							signal: "CLIENT_NAME",
-							name: clientAndNames.get(id),
-						}),
-					);
 				}
+
+				if (!clients.has(id)) {
+					clients.set(id, new Set());
+				}
+				clients.get(id)?.add(ws);
+
+				ws.send(
+					JSON.stringify({
+						signal: "CLIENT_INFO",
+						clientId: id,
+						authToken: authTokens.get(id),
+						name: clientAndNames.get(id),
+					}),
+				);
+
+				//Log the client's public key
+				publicKeys.set(id, parsedMessage.publicKey);
 
 				//Send a list of all previously connected clients and their online statuses
 				const contacts = [];

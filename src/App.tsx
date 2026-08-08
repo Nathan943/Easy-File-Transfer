@@ -444,12 +444,10 @@ const App = () => {
 	//This useEffect handles interfacing with the WebSocket (intializes on program start)
 	useEffect(() => {
 		//Generate a new id for this client if there isnt one saved in local storage
-		const clientId =
-			localStorage.getItem("clientId") ?? crypto.randomUUID();
-		localStorage.setItem("clientId", clientId);
 
 		//Initialize WS connection
-		socketHandler.connect(String(clientId));
+		const authToken = localStorage.getItem("authToken");
+		socketHandler.connect(authToken);
 
 		/*
 		These are a bunch of functions for changing UI based on incoming data from the server
