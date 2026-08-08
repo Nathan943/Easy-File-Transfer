@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 interface SettingsContextType {
+	saveFiles: boolean;
+	setSaveFiles: (saveFiles: boolean) => void;
 	autoDownload: boolean;
 	setAutoDownload: (autoDownload: boolean) => void;
 	soundOnDownload: boolean;
@@ -18,6 +20,10 @@ export const SettingsProvider = ({
 }: {
 	children: React.ReactNode;
 }) => {
+	const [saveFiles, setSaveFiles] = useState<boolean>(
+		() => localStorage.getItem("saveFiles") != "false",
+	);
+
 	const [autoDownload, setAutoDownload] = useState<boolean>(
 		() => localStorage.getItem("autoDownload") == "true",
 	);
@@ -29,6 +35,10 @@ export const SettingsProvider = ({
 	const [showOffline, setShowOffline] = useState<boolean>(
 		() => localStorage.getItem("showOffline") != "false",
 	);
+
+	useEffect(() => {
+		localStorage.setItem("saveFiles", String(saveFiles));
+	}, [saveFiles]);
 
 	useEffect(() => {
 		localStorage.setItem("autoDownload", String(autoDownload));
@@ -45,6 +55,8 @@ export const SettingsProvider = ({
 	return (
 		<SettingsContext.Provider
 			value={{
+				saveFiles,
+				setSaveFiles,
 				autoDownload,
 				setAutoDownload,
 				soundOnDownload,

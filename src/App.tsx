@@ -55,7 +55,7 @@ const App = () => {
 
 	const [dragging, setDragging] = useState(false);
 
-	const { autoDownload, soundOnDownload } = useSettings();
+	const { autoDownload, soundOnDownload, saveFiles } = useSettings();
 
 	//Add a new message to a conversation, creating one if there is not already
 	const addMessage = (client: Client, message: Message) => {
@@ -281,7 +281,9 @@ const App = () => {
 			URL.createObjectURL(file),
 		);
 
-		await fileStorageHandler.addFile(message.id, file);
+		if (saveFiles) {
+			await fileStorageHandler.addFile(message.id, file);
+		}
 
 		addMessage(selectedClient, message);
 
@@ -481,7 +483,9 @@ const App = () => {
 			async (client: Client, file: File, messageId: string) => {
 				console.log("file received");
 				//Upload to database
-				await fileStorageHandler.addFile(messageId, file);
+				if (saveFiles) {
+					await fileStorageHandler.addFile(messageId, file);
+				}
 
 				//Add file to the specified client
 				editMessage(

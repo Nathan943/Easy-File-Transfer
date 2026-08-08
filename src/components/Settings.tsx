@@ -9,6 +9,8 @@ interface Props {
 const Settings = ({ clearMessageHistory }: Props) => {
 	const { theme, themeMode, setThemeMode } = useTheme();
 	const {
+		saveFiles,
+		setSaveFiles,
 		autoDownload,
 		setAutoDownload,
 		soundOnDownload,
@@ -51,6 +53,25 @@ const Settings = ({ clearMessageHistory }: Props) => {
 			<div>
 				<h5 className="fw-normal">Transfers</h5>
 				<hr />
+				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
+					<h6 className="fw-normal mb-0">
+						Save files between sessions (256 MB or smaller)
+					</h6>
+					<div className="form-check form-switch">
+						<input
+							className="form-check-input shadow-none"
+							style={{
+								border: "1px solid #a1a6ac",
+								transform: "scale(1.2)",
+							}}
+							type="checkbox"
+							role="switch"
+							checked={saveFiles}
+							onChange={(e) => setSaveFiles(e.target.checked)}
+						/>
+					</div>
+				</div>
+
 				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
 					<h6 className="fw-normal mb-0">Download automatically</h6>
 					<div className="form-check form-switch">
