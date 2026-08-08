@@ -3,7 +3,10 @@ import crypto, { sign } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as syncFs from "node:fs";
 
-const wss = new WebSocketServer({ port: 8080 });
+const PORT = 8080;
+
+const wss = new WebSocketServer({ port: PORT });
+logAction("INFO", `SERVER_START port=${PORT}`);
 
 const clients = new Map<string, Set<WebSocket>>();
 const clientAndNames = new Map<string, string>();
@@ -20,6 +23,26 @@ const adjectives = (await fs.readFile("../src/names/adjectives.txt", "utf-8"))
 const animals = (await fs.readFile("../src/names/animals.txt", "utf-8"))
 	.split(/\r?\n/)
 	.filter(Boolean);
+
+function getLogFileName() {
+	const date = new Date();
+
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, "0");
+	const day = String(date.getDate()).padStart(2, "0");
+
+	return `../src/logs/${year}-${month}-${day}.log`;
+}
+
+async function logAction(type: "INFO" | "WARNING" | "ERROR", text: string) {
+	const timestamp = new Date().toISOString();
+	const log = `[${timestamp}] [${type}] ${text}\n`;
+
+	// console.log(log.trim());
+
+	await fs.mkdir("../src/logs", { recursive: true });
+	await fs.appendFile(getLogFileName(), log);
+}
 
 //Create a pairing code for the client
 function generatePairingCode() {
@@ -64,6 +87,7 @@ async function loadData() {
 	//Load data for each client
 	for (const client of savedClients) {
 		clientAndNames.set(client.id, client.name);
+		authTokens.set(client.id, client.authToken);
 		sessions.set(client.id, new Set(client.contacts));
 	}
 }
@@ -75,6 +99,7 @@ async function saveData() {
 		savedClients.push({
 			id,
 			name,
+			authToken: authTokens.get(id),
 			contacts: [...(sessions.get(id) ?? [])],
 		});
 	}
@@ -98,8 +123,6 @@ wss.on("connection", function connection(ws) {
 		string,
 		{ targetClientId: string; socket: WebSocket }
 	>();
-
-	console.log("Total clients: ", clients.size + 1);
 
 	const decoder = new TextDecoder();
 
@@ -129,6 +152,11 @@ wss.on("connection", function connection(ws) {
 					}),
 				);
 
+				logAction(
+					"WARNING",
+					`FILE_TRANSFER_FAILED from=${id} to=${outgoingTransfers.get(messageId)?.targetClientId} messageId=${messageId} reason=target_disconnect`,
+				);
+
 				outgoingTransfers.delete(messageId);
 			}
 
@@ -143,20 +171,19 @@ wss.on("connection", function connection(ws) {
         */
 		switch (parsedMessage.signal) {
 			case "ON_CLIENT_CONNECT": {
-				console.log(
-					`MESSAGE RECEIVED: ON_CLIENT_CONNECT\n---------------------------------------\nClient ID: ${parsedMessage.targetClientId}`,
-				);
-
 				//Log the session that just connected
 				if (parsedMessage.authToken != null) {
 					for (const [clientId, token] of authTokens) {
 						if (token == parsedMessage.authToken) {
 							id = clientId;
+
+							logAction("INFO", `CLIENT_AUTHENTICATED id=${id}`);
 							break;
 						}
 					}
 
 					if (!id) {
+						logAction("WARNING", `CLIENT_AUTH_FAILED`);
 						ws.close();
 						break;
 					}
@@ -172,6 +199,7 @@ wss.on("connection", function connection(ws) {
 					const name = generateName();
 					clientAndNames.set(id, name);
 
+					logAction("INFO", `CLIENT_REGISTERED id=${id}`);
 					await saveData();
 				}
 
@@ -191,6 +219,8 @@ wss.on("connection", function connection(ws) {
 
 				//Log the client's public key
 				publicKeys.set(id, parsedMessage.publicKey);
+
+				logAction("INFO", `PUBLIC_KEY_REGISTERED id=${id} `);
 
 				//Send a list of all previously connected clients and their online statuses
 				const contacts = [];
@@ -242,6 +272,11 @@ wss.on("connection", function connection(ws) {
 								}),
 							);
 						}
+
+						logAction(
+							"INFO",
+							`PUBLIC_KEYS_EXCHANGED client1=${id} client2=${connectedClientId}`,
+						);
 					}
 				}
 
@@ -252,16 +287,16 @@ wss.on("connection", function connection(ws) {
 					}),
 				);
 
+				logAction("INFO", `CLIENT_CONNECTED id=${id}`);
 				break;
 			}
 
 			case "REQUEST_PAIRING_CODE": {
-				console.log(
-					`MESSAGE RECEIVED: REQUEST_PAIRING_CODE\n---------------------------------------`,
-				);
-
 				//Generate and send a pairing code
 				let newPairingCode = generatePairingCode();
+
+				logAction("INFO", `CREATE_PAIRING_CODE client=${id}`);
+
 				ws.send(
 					JSON.stringify({
 						signal: "PAIRING_CODE",
@@ -270,17 +305,21 @@ wss.on("connection", function connection(ws) {
 				);
 				pairingCodes.set(newPairingCode, id);
 
-				//Delete pairing code after 60 seconds
+				//Delete pairing code after 10 mins
 				setTimeout(() => {
 					pairingCodes.delete(newPairingCode);
-					console.log("Pairing code deleted");
-				}, 60000);
+					logAction(
+						"INFO",
+						`DELETE_PAIRING_CODE client=${id} reason=expired`,
+					);
+				}, 600000);
 				break;
 			}
 
 			case "CHANGE_NAME": {
-				console.log(
-					`MESSAGE RECEIVED: CHANGE_NAME\n---------------------------------------\nName: ${parsedMessage.name}`,
+				logAction(
+					"INFO",
+					`CHANGE_NAME id=${id} old=${clientAndNames.get(id)} new=${parsedMessage.name}`,
 				);
 				//Change the clients name to what they sent
 				clientAndNames.set(id, parsedMessage.name);
@@ -313,17 +352,14 @@ wss.on("connection", function connection(ws) {
 			}
 
 			case "CONNECT_WITH_CLIENT": {
-				console.log(
-					`MESSAGE RECEIVED: CONNECT_WITH_CLIENT\n---------------------------------------\nPairing code: ${parsedMessage.pairingCode}`,
-				);
 				//Check if valid pairing code
 				if (pairingCodes.has(parsedMessage.pairingCode)) {
-					console.log("Connected");
-
 					//Get id of the target to pair with
 					const targetId = pairingCodes.get(
 						parsedMessage.pairingCode,
 					)!;
+
+					pairingCodes.delete(parsedMessage.pairingCode);
 
 					//Can't connect to yourself
 					if (targetId == id) {
@@ -333,6 +369,11 @@ wss.on("connection", function connection(ws) {
 								clientId: null,
 								clientName: null,
 							}),
+						);
+
+						logAction(
+							"WARNING",
+							`PAIRING_FAILED id=${id} reason=pairing_to_self`,
 						);
 
 						return;
@@ -370,7 +411,6 @@ wss.on("connection", function connection(ws) {
 
 						if (myKey) {
 							for (const client of sockets) {
-								console.log("Sending public key");
 								client.send(
 									JSON.stringify({
 										signal: "PUBLIC_KEY",
@@ -393,9 +433,13 @@ wss.on("connection", function connection(ws) {
 							}),
 						);
 					}
+
+					logAction(
+						"INFO",
+						`SESSION_CREATED client1=${id} client2=${targetId}`,
+					);
 				} else {
 					//Pairing code expired or does not exist
-					console.log("Unsuccessful connection");
 					ws.send(
 						JSON.stringify({
 							signal: "CONNECTED_CLIENT_INFO",
@@ -403,15 +447,16 @@ wss.on("connection", function connection(ws) {
 							clientName: null,
 						}),
 					);
+
+					logAction(
+						"WARNING",
+						`PAIRING_FAILED client1=${id} reason=invalid_code`,
+					);
 				}
 				break;
 			}
 
 			case "REMOVE_CLIENT": {
-				console.log(
-					`MESSAGE RECEIVED: REMOVE_CLIENT\n---------------------------------------\nClient ID: ${parsedMessage.clientId}`,
-				);
-
 				sessions.get(id)?.delete(parsedMessage.clientId);
 				sessions.get(parsedMessage.clientId)?.delete(id);
 
@@ -429,14 +474,15 @@ wss.on("connection", function connection(ws) {
 					);
 				}
 
+				logAction(
+					"INFO",
+					`SESSION_REMOVED client1=${id} client2=${parsedMessage.clientId}`,
+				);
+
 				break;
 			}
 
 			case "FILE_META": {
-				console.log(
-					`MESSAGE RECEIVED: FILE_META\n---------------------------------------\nTarget client ID: ${parsedMessage.targetClientId}\nFilename: ${parsedMessage.name}\nFile type: ${parsedMessage.type}\nTimestamp: ${parsedMessage.timestamp}\nFile size: ${parsedMessage.size}\nMessage ID: ${parsedMessage.messageId}`,
-				);
-
 				//Check if the clients are allowed to transfer files (connected)
 				const contacts = sessions.get(id);
 				if (!contacts?.has(parsedMessage.targetClientId)) {
@@ -471,6 +517,21 @@ wss.on("connection", function connection(ws) {
 					}),
 				);
 
+				logAction(
+					"INFO",
+					`FILE_TRANSFER_STARTED from=${id} to=${parsedMessage.targetClientId} file=${parsedMessage.name} size=${parsedMessage.size} messageId=${parsedMessage.messageId}`,
+				);
+
+				break;
+			}
+
+			case "TRANSFER_SUCCESS": {
+				outgoingTransfers.delete(parsedMessage.messageId);
+
+				logAction(
+					"INFO",
+					`FILE_TRANSFER_COMPLETED messageId=${parsedMessage.messageId}`,
+				);
 				break;
 			}
 		}
@@ -480,8 +541,6 @@ wss.on("connection", function connection(ws) {
     When client is disconnected
     */
 	ws.on("close", function close() {
-		console.log("close received");
-
 		//Delete the current tab connection
 		const sockets = clients.get(id);
 
@@ -525,7 +584,17 @@ wss.on("connection", function connection(ws) {
 					}
 				}
 				clients.delete(id);
+
+				logAction("INFO", `CLIENT_DISCONNECTED id=${id}`);
 			}
 		}
 	});
+});
+
+wss.on("close", function close() {
+	logAction("INFO", `SERVER_STOP`);
+});
+
+wss.on("error", function error(e) {
+	logAction("ERROR", `SERVER_ERROR error=${e.message}`);
 });

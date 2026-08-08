@@ -468,6 +468,8 @@ const App = () => {
 
 				return [...prev, client];
 			});
+
+			setActivePanel("none");
 		});
 
 		socketHandler.onMetaReceived(

@@ -44,7 +44,7 @@ const PairingMenu = ({
 						{pairingCode}
 					</h1>
 					<p className="text-center text-secondary">
-						Expires in 60 seconds
+						Expires in 10 minutes
 					</p>
 				</>
 			)}

@@ -136,6 +136,13 @@ class SocketHandler {
 						messageId,
 					);
 
+					this.socket?.send(
+						JSON.stringify({
+							signal: "TRANSFER_SUCCESS",
+							messageId,
+						}),
+					);
+
 					//Check if the automatic download settings is enabled, and if so download a copy immediately
 					if (this.autoDownload) {
 						const url = URL.createObjectURL(reconstructedFile);
