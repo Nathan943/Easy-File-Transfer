@@ -62,6 +62,7 @@ class SocketHandler {
 		messageId: string,
 		progress: number,
 	) => void;
+	private onConnectionStatusChangeCallback?: (connected: boolean) => void;
 
 	//Initialize WebSocket connection
 	connect(clientId: string) {
@@ -71,6 +72,9 @@ class SocketHandler {
 		//Connect to the server and tell it that this client is online
 		this.socket.addEventListener("open", async () => {
 			console.log("CONNECTED");
+
+			this.onConnectionStatusChangeCallback?.(true);
+
 			this.socket?.send(
 				JSON.stringify({
 					signal: "ON_CLIENT_CONNECT",
@@ -300,11 +304,15 @@ class SocketHandler {
 		//Listen for connection close
 		this.socket.addEventListener("close", () => {
 			console.log("DISCONNECTED");
+
+			this.onConnectionStatusChangeCallback?.(false);
 		});
 
 		//Listen for connection error
 		this.socket.addEventListener("error", () => {
 			console.log("ERROR");
+
+			this.onConnectionStatusChangeCallback?.(false);
 		});
 	}
 
@@ -514,6 +522,10 @@ class SocketHandler {
 
 	updateProgressBar(callback: (messageId: string, progress: number) => void) {
 		this.updateProgressBarCallback = callback;
+	}
+
+	onConnectionStatusChange(callback: (connected: boolean) => void) {
+		this.onConnectionStatusChangeCallback = callback;
 	}
 }
 

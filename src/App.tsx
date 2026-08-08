@@ -29,6 +29,8 @@ const App = () => {
 		online: false,
 	});
 
+	const [serverConnected, setServerConnected] = useState(false);
+
 	//For the MainContent component to decide whether to show the pairing menu or not
 	const [activePanel, setActivePanel] = useState<
 		"none" | "pairing" | "settings" | "contact"
@@ -369,13 +371,12 @@ const App = () => {
 			if (activePanel != "contact") return;
 
 			e.preventDefault();
+			setDragging(false);
 
 			const files = Array.from(e.dataTransfer?.files ?? []);
 			for (const file of files) {
 				await handleFileUpload(file);
 			}
-
-			setDragging(false);
 		};
 
 		window.addEventListener("dragenter", onDragEnter);
@@ -578,6 +579,10 @@ const App = () => {
 			},
 		);
 
+		socketHandler.onConnectionStatusChange((connected) => {
+			setServerConnected(connected);
+		});
+
 		return () => {
 			socketHandler.disconnect();
 		};
@@ -626,41 +631,59 @@ const App = () => {
 
 	return (
 		<div className="d-flex flex-column vh-100">
-			<div className="d-flex flex-grow-1">
-				{dragging && selectedClient.id != "" && <DropOverlay />}
-				<Sidebar
-					clients={clients}
-					name={name}
-					editName={editName}
-					onSelectClient={(client) => {
-						setSelectedClient(client);
-						console.log("set");
-						setActivePanel("contact");
-					}}
-					togglePairing={() => {
-						setSelectedClient({ name: "", id: "", online: false });
-						setActivePanel("pairing");
-					}}
-					toggleSettings={() => {
-						setSelectedClient({ name: "", id: "", online: false });
-						setActivePanel("settings");
-					}}
-					deleteClient={deleteClient}
-				/>
+			{serverConnected ? (
+				<div className="d-flex flex-grow-1">
+					{dragging && selectedClient.id != "" && <DropOverlay />}
+					<Sidebar
+						clients={clients}
+						name={name}
+						editName={editName}
+						onSelectClient={(client) => {
+							setSelectedClient(client);
+							console.log("set");
+							setActivePanel("contact");
+						}}
+						togglePairing={() => {
+							setSelectedClient({
+								name: "",
+								id: "",
+								online: false,
+							});
+							setActivePanel("pairing");
+						}}
+						toggleSettings={() => {
+							setSelectedClient({
+								name: "",
+								id: "",
+								online: false,
+							});
+							setActivePanel("settings");
+						}}
+						deleteClient={deleteClient}
+					/>
 
-				<MainContent
-					activePanel={activePanel}
-					pairingCode={pairingCode}
-					generatePairingCode={socketHandler.getPairingCode}
-					connectWithClient={socketHandler.connectWithClient}
-					onFileSelect={async (file) => {
-						await handleFileUpload(file);
-					}}
-					messages={getMessages()}
-					isOnline={selectedClient.online}
-					clearMessageHistory={clearMessageHistory}
-				/>
-			</div>
+					<MainContent
+						activePanel={activePanel}
+						pairingCode={pairingCode}
+						generatePairingCode={socketHandler.getPairingCode}
+						connectWithClient={socketHandler.connectWithClient}
+						onFileSelect={async (file) => {
+							await handleFileUpload(file);
+						}}
+						messages={getMessages()}
+						isOnline={selectedClient.online}
+						clearMessageHistory={clearMessageHistory}
+					/>
+				</div>
+			) : (
+				<div className="vh-100 vw-100 d-flex flex-column align-items-center justify-content-center">
+					<h1>Server unavailable</h1>
+					<h5 className="mt-3 lh-base text-center">
+						Couldn't connect to the server.
+						<br /> Make sure it's running and refresh this page.
+					</h5>
+				</div>
+			)}
 		</div>
 	);
 };
