@@ -1,15 +1,11 @@
-import React, {
-	act,
-	useEffect,
-	useLayoutEffect,
-	useRef,
-	useState,
-} from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import PairingMenu from "./PairingMenu";
-import { Message, Conversation } from "../types/types";
+import { Message, Client } from "../types/types";
 import MessageDisplay from "./MessageDisplay";
 import Settings from "./Settings";
-import { useTheme } from "../context/ThemeContext";
+import deleteIconDark from "../icons/back-dark.png";
+import deleteIconLight from "../icons/back-light.png";
+import { ThemeMode, useTheme } from "../context/ThemeContext";
 
 interface Props {
 	activePanel: "none" | "pairing" | "settings" | "contact";
@@ -20,6 +16,9 @@ interface Props {
 	messages: Message[];
 	isOnline: boolean;
 	clearMessageHistory: (forgetDevices: boolean) => Promise<void>;
+	isMobileUI: boolean;
+	selectedClient?: Client;
+	onMobileBackButton?: () => void;
 }
 
 const MainContent = ({
@@ -31,12 +30,15 @@ const MainContent = ({
 	messages,
 	isOnline,
 	clearMessageHistory,
+	isMobileUI,
+	selectedClient,
+	onMobileBackButton,
 }: Props) => {
 	const [isHovered, setIsHovered] = useState(false);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 
-	const { theme } = useTheme();
+	const { theme, themeMode } = useTheme();
 
 	useLayoutEffect(() => {
 		if (containerRef.current) {
@@ -45,55 +47,102 @@ const MainContent = ({
 	}, [messages, activePanel]);
 
 	return (
-		<div
-			className="flex-grow-1 d-flex justify-content-center h-100 pb-4"
-			style={{ maxHeight: "100vh" }}
-		>
+		<div className="w-100 h-100 d-flex flex-column pb-4 align-items-center">
+			{isMobileUI && (
+				<div
+					className="w-100 d-flex flex-row justify-content-start align-items-center"
+					style={{
+						backgroundColor: theme.background,
+						minHeight: "60px",
+					}}
+				>
+					<button
+						className="btn btn-link mx-4 p-0 z-9999"
+						style={{ height: "40px" }}
+						onClick={onMobileBackButton}
+					>
+						<img
+							src={
+								themeMode == "dark"
+									? deleteIconDark
+									: deleteIconLight
+							}
+							height={"25px"}
+						/>
+					</button>
+
+					<div className="d-flex flex-column">
+						<h4 className="lh-1 my-0 p-0">
+							{activePanel == "contact" &&
+								selectedClient &&
+								selectedClient.name}
+
+							{activePanel == "pairing" && "Pair Device"}
+
+							{activePanel == "settings" && "Settings"}
+						</h4>
+						{activePanel == "contact" && (
+							<div className="lh-1 mt-1">
+								{selectedClient?.online ? "Online" : "Offline"}
+							</div>
+						)}
+					</div>
+				</div>
+			)}
+
 			{activePanel == "pairing" ? (
 				<PairingMenu
 					pairingCode={pairingCode}
 					generatePairingCode={generatePairingCode}
 					connectWithClient={connectWithClient}
+					isMobileUI={isMobileUI}
 				/>
 			) : activePanel == "settings" ? (
-				<Settings clearMessageHistory={clearMessageHistory} />
+				<Settings
+					clearMessageHistory={clearMessageHistory}
+					isMobileUI={isMobileUI}
+				/>
 			) : activePanel == "contact" ? (
 				<div
-					className="d-flex flex-column overflow-auto p-5 w-100"
-					ref={containerRef}
-					style={{ height: "100%" }}
+					className="d-flex flex-column flex-grow-1 w-100 align-items-center"
+					style={{
+						height: isMobileUI ? "calc(100vh - 60px)" : "100%",
+					}}
 				>
-					<div className="mt-auto">
-						{messages.map((msg) => (
-							<MessageDisplay
-								isIncoming={msg.sender != undefined}
-								filename={msg.filename}
-								filesize={msg.filesize}
-								timestamp={msg.timestamp}
-								downloadUrl={msg.downloadUrl ?? ""}
-								status={msg.status}
-								progress={msg.progress}
-								key={msg.id}
-							/>
-						))}
+					<div
+						className="d-flex flex-grow-1 overflow-auto mb-2 pt-4 w-100 justify-content-center"
+						ref={containerRef}
+					>
+						<div className="mt-auto">
+							{messages.map((msg) => (
+								<MessageDisplay
+									isIncoming={msg.sender != undefined}
+									filename={msg.filename}
+									filesize={msg.filesize}
+									timestamp={msg.timestamp}
+									downloadUrl={msg.downloadUrl ?? ""}
+									status={msg.status}
+									progress={msg.progress}
+									key={msg.id}
+								/>
+							))}
+						</div>
 					</div>
 
 					<label
-						className={`btn d-flex align-items-center justify-content-center p-2 border-2 ${isOnline ? "btn-outline-primary" : "btn-outline-secondary"}`}
+						className={`btn d-flex align-items-center justify-content-center p-0 border-2 ${isOnline ? "btn-outline-primary" : "btn-outline-secondary"} ${isMobileUI ? "mb-2" : "mt-3"}`}
 						style={{
-							width: "74px",
-							height: "74px",
-							position: "absolute",
-							bottom: "80px",
-							right: "150px",
-							borderRadius: "40px",
+							width: "66px",
+							height: "66px",
+							borderRadius: "50%",
+							flexShrink: 0,
 						}}
 						onMouseEnter={() => setIsHovered(true)}
 						onMouseLeave={() => setIsHovered(false)}
 					>
 						<svg
-							width="30"
-							height="30"
+							width="25"
+							height="25"
 							viewBox="0 0 60 60"
 							fill="none"
 							xmlns="http://www.w3.org/2000/svg"
@@ -109,7 +158,6 @@ const MainContent = ({
 								}
 							/>
 						</svg>
-
 						<input
 							className=""
 							type="file"
@@ -123,7 +171,6 @@ const MainContent = ({
 										onFileSelect(file);
 									}
 								}
-
 								e.target.value = "";
 							}}
 						/>

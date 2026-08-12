@@ -38,13 +38,22 @@ const MessageDisplay = ({
 	return (
 		<div className="d-flex w-100 justify-content-center">
 			<div
-				className={`d-flex flex-row justify-content-between align-items-center mb-3 p-3 rounded-3 gap-4 shadow ${!isIncoming && "bg-primary text-white"}`}
-				style={{
-					width: "300px",
-					backgroundColor: isIncoming ? theme.messageBackground : "",
-					marginLeft: !isIncoming ? "350px" : "",
-					marginRight: isIncoming ? "350px" : "",
-				}}
+				className={`d-flex flex-row justify-content-between align-items-center p-3 rounded-3 shadow ${!isIncoming && "bg-primary text-white"}`}
+				style={
+					{
+						width: "300px",
+						backgroundColor: isIncoming
+							? theme.messageBackground
+							: "",
+						marginLeft: !isIncoming ? "calc(100vw / 8 - 20px)" : "",
+						marginRight: isIncoming ? "calc(100vw / 8 - 20px)" : "",
+						"--message-scale":
+							"clamp(0.9, calc(100cqw / 370px), 1)",
+						transform: "scale(var(--message-scale))",
+						marginBottom: "calc(16px * var(--message-scale))",
+						gap: "calc(24px * var(--message-scale))",
+					} as React.CSSProperties
+				}
 			>
 				<div className="d-flex flex-column" style={{ minWidth: 0 }}>
 					<h6

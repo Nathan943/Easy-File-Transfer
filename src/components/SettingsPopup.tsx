@@ -26,10 +26,17 @@ const SettingsPopup = ({
 	const { theme, themeMode } = useTheme();
 
 	return (
-		<div className="position-relative w-100 border-top mb-2 p-2 pb-0 ">
+		<div
+			className="position-relative w-100 border-top pb-0 "
+			style={{ paddingTop: "2.5cqw", marginBottom: "2.5cqw" }}
+		>
 			{editing ? (
 				<input
-					className="form-control fs-5 fw-bold p-3 shadow-none"
+					className="form-control fw-bold shadow-none"
+					style={{
+						fontSize: "clamp(20px, 7cqw, 40px)",
+						padding: "6cqw",
+					}}
 					value={newName}
 					onChange={(e) => setNewName(e.target.value)}
 					autoFocus
@@ -51,8 +58,9 @@ const SettingsPopup = ({
 				/>
 			) : (
 				<button
-					className="form-control btn w-100 fs-5 text-start shadow-none p-3"
+					className="form-control btn w-100 fs-5 text-start shadow-none"
 					style={{
+						padding: "6cqw",
 						fontWeight: "bold",
 						overflow: "hidden",
 						textOverflow: "ellipsis",
@@ -70,23 +78,26 @@ const SettingsPopup = ({
 					onMouseEnter={() => setIsHovered(true)}
 					onMouseLeave={() => setIsHovered(false)}
 				>
-					{name}
+					<span style={{ fontSize: "clamp(20px, 7cqw, 40px)" }}>
+						{name}
+					</span>
 				</button>
 			)}
 
 			{open && (
 				<div
-					className="position-absolute d-flex flex-column rounded-3 p-2"
+					className="position-absolute d-flex flex-column rounded-3 p-2 w-100"
 					style={{
-						width: "282px",
-						bottom: "calc(100% + 10px)",
+						bottom: "calc(100% + 3.33cqw)",
 						overflow: "hidden",
 						backgroundColor: theme.settingsPopupBackground,
 					}}
 				>
 					<button
-						className={`w-100 p-2 ps-3 text-start rounded-3 border-0 d-flex flex-row align-items-center btn ${themeMode == "light" ? "btn-light" : "btn-dark"}`}
+						className={`w-100 text-start rounded-3 border-0 d-flex flex-row align-items-center btn ${themeMode == "light" ? "btn-light" : "btn-dark"}`}
 						style={{
+							padding: "2.5cqw",
+							paddingLeft: "5cqw",
 							backgroundColor: editIsHovered
 								? theme.hover
 								: theme.settingsPopupBackground,
@@ -107,16 +118,20 @@ const SettingsPopup = ({
 									: "../src/icons/edit-dark.png"
 							}
 							style={{
-								width: "18px",
-								height: "18px",
-								marginRight: "12px",
+								width: "6cqw",
+								height: "6cqw",
+								marginRight: "4cqw",
 							}}
 						/>
-						Change Name
+						<span style={{ fontSize: "clamp(16px, 6cqw, 36px)" }}>
+							Change Name
+						</span>
 					</button>
 					<button
-						className={`w-100 p-2 ps-3 text-start rounded-3 border-0 d-flex flex-row align-items-center btn`}
+						className={`w-100 text-start rounded-3 border-0 d-flex flex-row align-items-center btn`}
 						style={{
+							padding: "2.5cqw",
+							paddingLeft: "5cqw",
 							backgroundColor: settingsIsHovered
 								? theme.hover
 								: theme.settingsPopupBackground,
@@ -137,12 +152,14 @@ const SettingsPopup = ({
 									: "../src/icons/settings-dark.png"
 							}
 							style={{
-								width: "18px",
-								height: "18px",
-								marginRight: "12px",
+								width: "6cqw",
+								height: "6cqw",
+								marginRight: "4cqw",
 							}}
 						/>
-						Settings
+						<span style={{ fontSize: "clamp(16px, 6cqw, 36px)" }}>
+							Settings
+						</span>
 					</button>
 				</div>
 			)}

@@ -17,12 +17,13 @@ const ClientListItem = ({ client, selected, onClick, onDelete }: Props) => {
 
 	return (
 		<li
-			className={`list-group-item d-flex justify-content-between align-items-center border-0 px-3 py-2 rounded-3 `}
+			className={`w-100 list-group-item d-flex justify-content-between align-items-center border-0 rounded-3 `}
 			style={{
 				backgroundColor:
 					selected || isHovered ? theme.selected : "transparent",
 				cursor: "pointer",
 				transition: "background-color 0.15s ease",
+				padding: "2.5cqw 5cqw",
 			}}
 			onClick={onClick}
 			onMouseEnter={() => setIsHovered(true)}
@@ -31,15 +32,18 @@ const ClientListItem = ({ client, selected, onClick, onDelete }: Props) => {
 		>
 			<div className="d-flex align-items-center">
 				<div
-					className="rounded-circle me-3"
+					className="rounded-circle"
 					style={{
-						width: 18,
-						height: 18,
+						width: "8cqw",
+						height: "8cqw",
+						marginRight: "5cqw",
 						backgroundColor: client.online ? "#22c55e" : "#979ea5",
 					}}
 				/>
 
-				<span>{client.name}</span>
+				<span style={{ fontSize: "clamp(16px, 6cqw, 36px)" }}>
+					{client.name}
+				</span>
 			</div>
 
 			<button
@@ -59,7 +63,7 @@ const ClientListItem = ({ client, selected, onClick, onDelete }: Props) => {
 							: "../src/icons/delete-gray.png"
 					}
 					style={{
-						width: 20,
+						width: "8cqw",
 					}}
 				/>
 			</button>

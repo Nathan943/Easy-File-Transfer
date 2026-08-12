@@ -4,9 +4,10 @@ import { useSettings } from "../context/SettingsContext";
 
 interface Props {
 	clearMessageHistory: (forgetDevices: boolean) => Promise<void>;
+	isMobileUI: boolean;
 }
 
-const Settings = ({ clearMessageHistory }: Props) => {
+const Settings = ({ clearMessageHistory, isMobileUI }: Props) => {
 	const { theme, themeMode, setThemeMode } = useTheme();
 	const {
 		saveFiles,
@@ -21,16 +22,16 @@ const Settings = ({ clearMessageHistory }: Props) => {
 
 	return (
 		<div
-			className="d-flex flex-column justify-content-start p-5 gap-5"
-			style={{ width: "40%" }}
+			className="d-flex flex-column justify-content-start p-4 gap-5 overflow-auto"
+			style={{ width: isMobileUI ? "100%" : "40%" }}
 		>
-			<h2 className="fw-bold pt-5">Settings</h2>
+			{!isMobileUI && <h2 className="fw-bold pt-5">Settings</h2>}
 
 			<div>
 				<h5 className="fw-normal">General</h5>
 				<hr />
 				<div className="d-flex flex-row justify-content-between align-items-center">
-					<h6 className="fw-normal mb-0">Theme</h6>
+					<h6 className="fw-normal mb-0 me-3">Theme</h6>
 					<select
 						name="theme"
 						value={themeMode}
@@ -54,7 +55,7 @@ const Settings = ({ clearMessageHistory }: Props) => {
 				<h5 className="fw-normal">Transfers</h5>
 				<hr />
 				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
-					<h6 className="fw-normal mb-0">
+					<h6 className="fw-normal mb-0 me-3">
 						Save files between sessions (256 MB or smaller)
 					</h6>
 					<div className="form-check form-switch">
@@ -73,7 +74,9 @@ const Settings = ({ clearMessageHistory }: Props) => {
 				</div>
 
 				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
-					<h6 className="fw-normal mb-0">Download automatically</h6>
+					<h6 className="fw-normal mb-0 me-3">
+						Download automatically
+					</h6>
 					<div className="form-check form-switch">
 						<input
 							className="form-check-input shadow-none"
@@ -90,7 +93,7 @@ const Settings = ({ clearMessageHistory }: Props) => {
 				</div>
 
 				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
-					<h6 className="fw-normal mb-0">
+					<h6 className="fw-normal mb-0 me-3">
 						Play sound on receiving files
 					</h6>
 					<div className="form-check form-switch">
@@ -111,7 +114,9 @@ const Settings = ({ clearMessageHistory }: Props) => {
 				</div>
 
 				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
-					<h6 className="fw-normal mb-0">Clear all transfer data</h6>
+					<h6 className="fw-normal mb-0 me-3">
+						Clear all transfer data
+					</h6>
 					<button
 						className="btn btn-outline-danger p-1 px-2"
 						onClick={async () => {
@@ -133,7 +138,9 @@ const Settings = ({ clearMessageHistory }: Props) => {
 				<h5 className="fw-normal">Devices</h5>
 				<hr />
 				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
-					<h6 className="fw-normal mb-0">Show offline devices</h6>
+					<h6 className="fw-normal mb-0 me-3">
+						Show offline devices
+					</h6>
 					<div className="form-check form-switch">
 						<input
 							className="form-check-input shadow-none"
@@ -149,7 +156,7 @@ const Settings = ({ clearMessageHistory }: Props) => {
 					</div>
 				</div>
 				<div className="d-flex flex-row justify-content-between align-items-center">
-					<h6 className="fw-normal mb-0">Forget all devices</h6>
+					<h6 className="fw-normal mb-0 me-3">Forget all devices</h6>
 					<button
 						className="btn btn-outline-danger p-1 px-2"
 						onClick={async () => {

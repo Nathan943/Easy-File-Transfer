@@ -26,8 +26,8 @@ const ClientList = ({
 
 	return (
 		<ul
-			className="list-group w-100 gap-1 px-2 border-0 flex-grow-1 overflow-y-auto hide-scrollbar"
-			style={{ scrollbarWidth: "none" }}
+			className="list-group w-100 border-0 flex-grow-1 overflow-y-auto hide-scrollbar"
+			style={{ scrollbarWidth: "none", gap: "3cqw" }}
 		>
 			{clients
 				.filter((client) => client.online || showOffline)

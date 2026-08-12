@@ -1,0 +1,23 @@
+.desktop-layout {
+	display: flex;
+	width: 100%;
+	height: 100vh;
+}
+
+.mobile-layout {
+	display: none;
+	width: 100%;
+	height: 100vh;
+}
+
+@media (max-width: 767px) {
+	.desktop-layout {
+		display: none;
+	}
+
+	.mobile-layout {
+		display: block;
+		width: 100%;
+		height: 100vh;
+	}
+}

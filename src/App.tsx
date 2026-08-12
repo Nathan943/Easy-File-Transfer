@@ -7,8 +7,12 @@ import fileStorageHandler from "./handlers/FileStorageHandler";
 import cryptoHandler from "./handlers/CryptoHandler";
 import { useSettings } from "./context/SettingsContext";
 import DropOverlay from "./components/DropOverlay";
+import "./App.css";
 
 const App = () => {
+	type MobileScreen = "sidebar" | "main";
+	const [mobileScreen, setMobileScreen] = useState<MobileScreen>("sidebar");
+
 	//List of connected clients, stored as name and id
 	const [clients, setClients] = useState<Client[]>(() => {
 		const saved = localStorage.getItem("contacts");
@@ -291,6 +295,11 @@ const App = () => {
 
 		await socketHandler.send(file, selectedClient, message.id);
 	};
+
+	useEffect(() => {
+		if (window.innerWidth <= 768) {
+		}
+	}, [window.innerWidth]);
 
 	//Update local storage when a new contact is added
 	useEffect(() => {
@@ -599,90 +608,157 @@ const App = () => {
 	// const testClients: Client[] = [
 	// 	{ id: "1", name: "Beautiful Starling", online: true },
 	// 	{ id: "2", name: "Swift Otter", online: false },
-	// 	{ id: "3", name: "Silent Falcon", online: true },
-	// 	{ id: "4", name: "Lucky Turtle", online: false },
-	// 	{ id: "5", name: "Brave Fox", online: true },
-	// 	{ id: "6", name: "Beautiful Starling", online: true },
-	// 	{ id: "7", name: "Swift Otter", online: false },
-	// 	{ id: "8", name: "Silent Falcon", online: true },
-	// 	{ id: "9", name: "Lucky Turtle", online: false },
-	// 	{ id: "10", name: "Brave Fox", online: true },
-	// 	{ id: "11", name: "Beautiful Starling", online: true },
-	// 	{ id: "12", name: "Swift Otter", online: false },
-	// 	{ id: "13", name: "Silent Falcon", online: true },
-	// 	{ id: "14", name: "Lucky Turtle", online: false },
-	// 	{ id: "15", name: "Brave Fox", online: true },
-	// 	{ id: "16", name: "Beautiful Starling", online: true },
-	// 	{ id: "17", name: "Swift Otter", online: false },
-	// 	{ id: "18", name: "Silent Falcon", online: true },
-	// 	{ id: "19", name: "Lucky Turtle", online: false },
-	// 	{ id: "20", name: "Brave Fox", online: true },
-	// 	{ id: "21", name: "Beautiful Starling", online: true },
-	// 	{ id: "22", name: "Swift Otter", online: false },
-	// 	{ id: "23", name: "Silent Falcon", online: true },
-	// 	{ id: "24", name: "Lucky Turtle", online: false },
-	// 	{ id: "25", name: "Brave Fox", online: true },
-	// 	{ id: "26", name: "Beautiful Starling", online: true },
-	// 	{ id: "27", name: "Swift Otter", online: false },
-	// 	{ id: "28", name: "Silent Falcon", online: true },
-	// 	{ id: "29", name: "Lucky Turtle", online: false },
-	// 	{ id: "30", name: "Brave Fox", online: true },
+	// 	// { id: "3", name: "Silent Falcon", online: true },
+	// 	// { id: "4", name: "Lucky Turtle", online: false },
+	// 	// { id: "5", name: "Brave Fox", online: true },
+	// 	// { id: "6", name: "Beautiful Starling", online: true },
+	// 	// { id: "7", name: "Swift Otter", online: false },
+	// 	// { id: "8", name: "Silent Falcon", online: true },
+	// 	// { id: "9", name: "Lucky Turtle", online: false },
+	// 	// { id: "10", name: "Brave Fox", online: true },
+	// 	// { id: "11", name: "Beautiful Starling", online: true },
+	// 	// { id: "12", name: "Swift Otter", online: false },
+	// 	// { id: "13", name: "Silent Falcon", online: true },
+	// 	// { id: "14", name: "Lucky Turtle", online: false },
+	// 	// { id: "15", name: "Brave Fox", online: true },
+	// 	// { id: "16", name: "Beautiful Starling", online: true },
+	// 	// { id: "17", name: "Swift Otter", online: false },
+	// 	// { id: "18", name: "Silent Falcon", online: true },
+	// 	// { id: "19", name: "Lucky Turtle", online: false },
+	// 	// { id: "20", name: "Brave Fox", online: true },
+	// 	// { id: "21", name: "Beautiful Starling", online: true },
+	// 	// { id: "22", name: "Swift Otter", online: false },
+	// 	// { id: "23", name: "Silent Falcon", online: true },
+	// 	// { id: "24", name: "Lucky Turtle", online: false },
+	// 	// { id: "25", name: "Brave Fox", online: true },
+	// 	// { id: "26", name: "Beautiful Starling", online: true },
+	// 	// { id: "27", name: "Swift Otter", online: false },
+	// 	// { id: "28", name: "Silent Falcon", online: true },
+	// 	// { id: "29", name: "Lucky Turtle", online: false },
+	// 	// { id: "30", name: "Brave Fox", online: true },
 	// ];
 
 	return (
-		<div className="d-flex flex-column vh-100">
-			{serverConnected ? (
-				<div className="d-flex flex-grow-1">
-					{dragging && selectedClient.id != "" && <DropOverlay />}
-					<Sidebar
-						clients={clients}
-						name={name}
-						editName={editName}
-						onSelectClient={(client) => {
-							setSelectedClient(client);
-							console.log("set");
-							setActivePanel("contact");
-						}}
-						togglePairing={() => {
-							setSelectedClient({
-								name: "",
-								id: "",
-								online: false,
-							});
-							setActivePanel("pairing");
-						}}
-						toggleSettings={() => {
-							setSelectedClient({
-								name: "",
-								id: "",
-								online: false,
-							});
-							setActivePanel("settings");
-						}}
-						deleteClient={deleteClient}
-					/>
-
-					<MainContent
-						activePanel={activePanel}
-						pairingCode={pairingCode}
-						generatePairingCode={socketHandler.getPairingCode}
-						connectWithClient={socketHandler.connectWithClient}
-						onFileSelect={async (file) => {
-							await handleFileUpload(file);
-						}}
-						messages={getMessages()}
-						isOnline={selectedClient.online}
-						clearMessageHistory={clearMessageHistory}
-					/>
-				</div>
-			) : (
+		<div>
+			{!serverConnected ? (
 				<div className="vh-100 vw-100 d-flex flex-column align-items-center justify-content-center">
 					<h1>Server unavailable</h1>
+
 					<h5 className="mt-3 lh-base text-center">
 						Couldn't connect to the server.
-						<br /> Make sure it's running and refresh this page.
+						<br />
+						Make sure it's running and refresh this page.
 					</h5>
 				</div>
+			) : (
+				<>
+					{/* DESKTOP LAYOUT */}
+					<div className="desktop-layout">
+						{dragging && selectedClient.id != "" && <DropOverlay />}
+						<Sidebar
+							clients={clients}
+							name={name}
+							editName={editName}
+							onSelectClient={(client) => {
+								setSelectedClient(client);
+								console.log("set");
+								setActivePanel("contact");
+							}}
+							togglePairing={() => {
+								setSelectedClient({
+									name: "",
+									id: "",
+									online: false,
+								});
+								setActivePanel("pairing");
+							}}
+							toggleSettings={() => {
+								setSelectedClient({
+									name: "",
+									id: "",
+									online: false,
+								});
+								setActivePanel("settings");
+							}}
+							deleteClient={deleteClient}
+						/>
+
+						<MainContent
+							activePanel={activePanel}
+							pairingCode={pairingCode}
+							generatePairingCode={socketHandler.getPairingCode}
+							connectWithClient={socketHandler.connectWithClient}
+							onFileSelect={async (file) => {
+								await handleFileUpload(file);
+							}}
+							messages={getMessages()}
+							isOnline={selectedClient.online}
+							clearMessageHistory={clearMessageHistory}
+							isMobileUI={false}
+						/>
+					</div>
+
+					{/* MOBILE LAYOUT */}
+					<div className="mobile-layout">
+						{dragging && selectedClient.id != "" && <DropOverlay />}
+						{mobileScreen == "sidebar" && (
+							<Sidebar
+								clients={clients}
+								name={name}
+								editName={editName}
+								onSelectClient={(client) => {
+									setSelectedClient(client);
+									setActivePanel("contact");
+									setMobileScreen("main");
+								}}
+								togglePairing={() => {
+									setSelectedClient({
+										name: "",
+										id: "",
+										online: false,
+									});
+									setActivePanel("pairing");
+									setMobileScreen("main");
+								}}
+								toggleSettings={() => {
+									setSelectedClient({
+										name: "",
+										id: "",
+										online: false,
+									});
+									setActivePanel("settings");
+									setMobileScreen("main");
+								}}
+								deleteClient={deleteClient}
+								isMobileUI={true}
+							/>
+						)}
+
+						{mobileScreen == "main" && (
+							<MainContent
+								activePanel={activePanel}
+								pairingCode={pairingCode}
+								generatePairingCode={
+									socketHandler.getPairingCode
+								}
+								connectWithClient={
+									socketHandler.connectWithClient
+								}
+								onFileSelect={async (file) => {
+									await handleFileUpload(file);
+								}}
+								messages={getMessages()}
+								isOnline={selectedClient.online}
+								clearMessageHistory={clearMessageHistory}
+								isMobileUI={true}
+								selectedClient={selectedClient}
+								onMobileBackButton={() =>
+									setMobileScreen("sidebar")
+								}
+							/>
+						)}
+					</div>
+				</>
 			)}
 		</div>
 	);

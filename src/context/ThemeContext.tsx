@@ -16,10 +16,10 @@ const lightTheme: Theme = {
 	background: "#ffffff",
 	text: "#212529",
 	border: "#ced4da",
-	hover: "#bdbebe",
+	hover: "#cfcfcf",
 	selected: "#e6e6e6",
 	messageBackground: "#d3d4d5",
-	settingsPopupBackground: "#d1d1d1",
+	settingsPopupBackground: "#e6e6e6",
 };
 
 const darkTheme: Theme = {

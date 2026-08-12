@@ -4,12 +4,14 @@ interface Props {
 	pairingCode: number;
 	generatePairingCode: () => void;
 	connectWithClient: (pairingCode: string) => void;
+	isMobileUI?: boolean;
 }
 
 const PairingMenu = ({
 	pairingCode,
 	generatePairingCode,
 	connectWithClient,
+	isMobileUI,
 }: Props) => {
 	const [inputCode, setInputCode] = useState("");
 
@@ -19,8 +21,11 @@ const PairingMenu = ({
 
 	return (
 		<div
-			className="d-flex flex-column justify-content-center"
-			style={{ width: "250px" }}
+			className="d-flex flex-column my-auto justify-content-center"
+			style={{
+				width: "clamp(200px, 70cqw, 250px)",
+				transform: isMobileUI ? "scale(1.15)" : "",
+			}}
 		>
 			<h4 className="mb-3">Add device</h4>
 

@@ -14,6 +14,7 @@ interface Props {
 	togglePairing: () => void;
 	toggleSettings: () => void;
 	deleteClient: (client: Client) => void;
+	isMobileUI?: boolean;
 }
 
 const Sidebar = ({
@@ -24,24 +25,26 @@ const Sidebar = ({
 	editName,
 	deleteClient,
 	toggleSettings,
+	isMobileUI,
 }: Props) => {
 	const [deselect, setDeselect] = useState(0);
 
 	return (
 		<div
-			className="d-flex flex-column align-items-start justify-content-start p-0 border-end rounded-0 vh-100"
+			className="d-flex flex-column align-items-start justify-content-start border-end pb-0 rounded-0 h-100"
 			style={{
-				width: "300px",
+				width: isMobileUI ? "100%" : "300px",
+				padding: isMobileUI ? "24px" : "16px",
+				containerType: "inline-size",
 			}}
 		>
-			<div className="w-100 p-3 pb-4">
-				<PairingButton
-					togglePairing={togglePairing}
-					onPairingMenu={() => {
-						setDeselect((prev) => prev + 1);
-					}}
-				/>
-			</div>
+			<PairingButton
+				togglePairing={togglePairing}
+				onPairingMenu={() => {
+					setDeselect((prev) => prev + 1);
+				}}
+				isMobileUI={isMobileUI}
+			/>
 			<ClientList
 				clients={clients}
 				onSelectClient={onSelectClient}
