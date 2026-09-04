@@ -21,172 +21,179 @@ const Settings = ({ clearMessageHistory, isMobileUI }: Props) => {
 	} = useSettings();
 
 	return (
-		<div
-			className="d-flex flex-column justify-content-start p-4 gap-5 overflow-auto"
-			style={{ width: isMobileUI ? "100%" : "40%" }}
-		>
-			{!isMobileUI && <h2 className="fw-bold pt-5">Settings</h2>}
+		<div className="d-flex justify-content-center overflow-auto pt-5 w-100">
+			<div
+				className="d-flex flex-column justify-content-start gap-5"
+				style={{ width: "clamp(280px, 50cqw, 600px)" }}
+			>
+				{!isMobileUI && <h2 className="fw-bold pt-5">Settings</h2>}
 
-			<div>
-				<h5 className="fw-normal">General</h5>
-				<hr />
-				<div className="d-flex flex-row justify-content-between align-items-center">
-					<h6 className="fw-normal mb-0 me-3">Theme</h6>
-					<select
-						name="theme"
-						value={themeMode}
-						onChange={(e) =>
-							setThemeMode(e.target.value as ThemeMode)
-						}
-						className="border-0"
-						style={{
-							outline: 0,
-							backgroundColor: theme.background,
-						}}
-					>
-						<option value="light">Light</option>
-						<option value="dark">Dark</option>
-						<option value="system">System</option>
-					</select>
-				</div>
-			</div>
-
-			<div>
-				<h5 className="fw-normal">Transfers</h5>
-				<hr />
-				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
-					<h6 className="fw-normal mb-0 me-3">
-						Save files between sessions (256 MB or smaller)
-					</h6>
-					<div className="form-check form-switch">
-						<input
-							className="form-check-input shadow-none"
-							style={{
-								border: "1px solid #a1a6ac",
-								transform: "scale(1.2)",
-							}}
-							type="checkbox"
-							role="switch"
-							checked={saveFiles}
-							onChange={(e) => setSaveFiles(e.target.checked)}
-						/>
-					</div>
-				</div>
-
-				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
-					<h6 className="fw-normal mb-0 me-3">
-						Download automatically
-					</h6>
-					<div className="form-check form-switch">
-						<input
-							className="form-check-input shadow-none"
-							style={{
-								border: "1px solid #a1a6ac",
-								transform: "scale(1.2)",
-							}}
-							type="checkbox"
-							role="switch"
-							checked={autoDownload}
-							onChange={(e) => setAutoDownload(e.target.checked)}
-						/>
-					</div>
-				</div>
-
-				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
-					<h6 className="fw-normal mb-0 me-3">
-						Play sound on receiving files
-					</h6>
-					<div className="form-check form-switch">
-						<input
-							className="form-check-input shadow-none"
-							style={{
-								border: "1px solid #a1a6ac",
-								transform: "scale(1.2)",
-							}}
-							type="checkbox"
-							role="switch"
-							checked={soundOnDownload}
+				<div>
+					<h5 className="fw-normal">General</h5>
+					<hr />
+					<div className="d-flex flex-row justify-content-between align-items-center">
+						<h6 className="fw-normal mb-0 me-3">Theme</h6>
+						<select
+							name="theme"
+							value={themeMode}
 							onChange={(e) =>
-								setSoundOnDownload(e.target.checked)
+								setThemeMode(e.target.value as ThemeMode)
 							}
-						/>
-					</div>
-				</div>
-
-				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
-					<h6 className="fw-normal mb-0 me-3">
-						Clear all transfer data
-					</h6>
-					<button
-						className="btn btn-outline-danger p-1 px-2"
-						onClick={async () => {
-							if (
-								confirm(
-									"Delete all transfer history and stored files? This cannot be undone.",
-								)
-							) {
-								await clearMessageHistory(false);
-							}
-						}}
-					>
-						Clear all transfer data
-					</button>
-				</div>
-			</div>
-
-			<div>
-				<h5 className="fw-normal">Devices</h5>
-				<hr />
-				<div className="d-flex flex-row justify-content-between align-items-center mb-3">
-					<h6 className="fw-normal mb-0 me-3">
-						Show offline devices
-					</h6>
-					<div className="form-check form-switch">
-						<input
-							className="form-check-input shadow-none"
+							className="border-0"
 							style={{
-								border: "1px solid #a1a6ac",
-								transform: "scale(1.2)",
+								outline: 0,
+								backgroundColor: theme.background,
 							}}
-							type="checkbox"
-							role="switch"
-							checked={showOffline}
-							onChange={(e) => setShowOffline(e.target.checked)}
-						/>
+						>
+							<option value="light">Light</option>
+							<option value="dark">Dark</option>
+						</select>
 					</div>
 				</div>
-				<div className="d-flex flex-row justify-content-between align-items-center">
-					<h6 className="fw-normal mb-0 me-3">Forget all devices</h6>
-					<button
-						className="btn btn-outline-danger p-1 px-2"
-						onClick={async () => {
-							if (
-								confirm(
-									"Remove all paired devices, conversation history, and stored files? This cannot be undone.",
-								)
-							) {
-								await clearMessageHistory(true);
-							}
-						}}
-					>
-						Forget all devices
-					</button>
-				</div>
-			</div>
 
-			<div>
-				<h5 className="fw-normal">About</h5>
-				<hr />
-				<h6 className="fw-normal mb-2">Version 1.0.0</h6>
-				<a
-					href="https://github.com/Nathan943/easy-file-transfer-website"
-					target="_blank"
-					className={
-						themeMode == "light" ? "text-dark" : "text-light"
-					}
-				>
-					GitHub
-				</a>
+				<div>
+					<h5 className="fw-normal">Transfers</h5>
+					<hr />
+					<div className="d-flex flex-row justify-content-between align-items-center mb-3">
+						<h6 className="fw-normal mb-0 me-3">
+							Save files between sessions (256 MB or smaller)
+						</h6>
+						<div className="form-check form-switch">
+							<input
+								className="form-check-input shadow-none"
+								style={{
+									border: "1px solid #a1a6ac",
+									transform: "scale(1.2)",
+								}}
+								type="checkbox"
+								role="switch"
+								checked={saveFiles}
+								onChange={(e) => setSaveFiles(e.target.checked)}
+							/>
+						</div>
+					</div>
+
+					<div className="d-flex flex-row justify-content-between align-items-center mb-3">
+						<h6 className="fw-normal mb-0 me-3">
+							Download automatically
+						</h6>
+						<div className="form-check form-switch">
+							<input
+								className="form-check-input shadow-none"
+								style={{
+									border: "1px solid #a1a6ac",
+									transform: "scale(1.2)",
+								}}
+								type="checkbox"
+								role="switch"
+								checked={autoDownload}
+								onChange={(e) =>
+									setAutoDownload(e.target.checked)
+								}
+							/>
+						</div>
+					</div>
+
+					<div className="d-flex flex-row justify-content-between align-items-center mb-3">
+						<h6 className="fw-normal mb-0 me-3">
+							Play sound on receiving files
+						</h6>
+						<div className="form-check form-switch">
+							<input
+								className="form-check-input shadow-none"
+								style={{
+									border: "1px solid #a1a6ac",
+									transform: "scale(1.2)",
+								}}
+								type="checkbox"
+								role="switch"
+								checked={soundOnDownload}
+								onChange={(e) =>
+									setSoundOnDownload(e.target.checked)
+								}
+							/>
+						</div>
+					</div>
+
+					<div className="d-flex flex-row justify-content-between align-items-center mb-3">
+						<h6 className="fw-normal mb-0 me-3">
+							Clear all transfer data
+						</h6>
+						<button
+							className="btn btn-outline-danger p-1 px-2"
+							onClick={async () => {
+								if (
+									confirm(
+										"Delete all transfer history and stored files? This cannot be undone.",
+									)
+								) {
+									await clearMessageHistory(false);
+								}
+							}}
+						>
+							Clear all transfer data
+						</button>
+					</div>
+				</div>
+
+				<div>
+					<h5 className="fw-normal">Devices</h5>
+					<hr />
+					<div className="d-flex flex-row justify-content-between align-items-center mb-3">
+						<h6 className="fw-normal mb-0 me-3">
+							Show offline devices
+						</h6>
+						<div className="form-check form-switch">
+							<input
+								className="form-check-input shadow-none"
+								style={{
+									border: "1px solid #a1a6ac",
+									transform: "scale(1.2)",
+								}}
+								type="checkbox"
+								role="switch"
+								checked={showOffline}
+								onChange={(e) =>
+									setShowOffline(e.target.checked)
+								}
+							/>
+						</div>
+					</div>
+					<div className="d-flex flex-row justify-content-between align-items-center">
+						<h6 className="fw-normal mb-0 me-3">
+							Forget all devices
+						</h6>
+						<button
+							className="btn btn-outline-danger p-1 px-2"
+							onClick={async () => {
+								if (
+									confirm(
+										"Remove all paired devices, conversation history, and stored files? This cannot be undone.",
+									)
+								) {
+									await clearMessageHistory(true);
+								}
+							}}
+						>
+							Forget all devices
+						</button>
+					</div>
+				</div>
+
+				<div>
+					<h5 className="fw-normal">About</h5>
+					<hr />
+					<h6 className="fw-normal mb-2">Version 1.0.0</h6>
+					<a
+						href="https://github.com/Nathan943/easy-file-transfer-website"
+						target="_blank"
+						className={
+							themeMode == "light" ? "text-dark" : "text-light"
+						}
+					>
+						GitHub
+					</a>
+				</div>
 			</div>
 		</div>
 	);

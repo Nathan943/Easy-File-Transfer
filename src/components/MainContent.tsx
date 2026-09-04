@@ -47,7 +47,7 @@ const MainContent = ({
 	}, [messages, activePanel]);
 
 	return (
-		<div className="w-100 h-100 d-flex flex-column pb-4 align-items-center">
+		<div className="w-100 h-50 d-flex flex-column align-items-center">
 			{isMobileUI && (
 				<div
 					className="w-100 d-flex flex-row justify-content-start align-items-center"
@@ -57,7 +57,7 @@ const MainContent = ({
 					}}
 				>
 					<button
-						className="btn btn-link mx-4 p-0 z-9999"
+						className="btn btn-link mx-4 p-0 z-9999 d-flex align-items-center"
 						style={{ height: "40px" }}
 						onClick={onMobileBackButton}
 					>
@@ -67,11 +67,11 @@ const MainContent = ({
 									? deleteIconDark
 									: deleteIconLight
 							}
-							height={"25px"}
+							height={"20px"}
 						/>
 					</button>
 
-					<div className="d-flex flex-column">
+					<div className="d-flex flex-column justify-content-center">
 						<h4 className="lh-1 my-0 p-0">
 							{activePanel == "contact" &&
 								selectedClient &&

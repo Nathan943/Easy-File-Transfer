@@ -196,7 +196,6 @@ class CryptoHandler {
 
 			this.request.onsuccess = (event) => {
 				this.db = (event.target as IDBOpenDBRequest).result;
-				console.log("Database opened");
 
 				resolve();
 			};

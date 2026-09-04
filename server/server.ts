@@ -5,7 +5,7 @@ import * as syncFs from "node:fs";
 
 const PORT = 8080;
 
-const wss = new WebSocketServer({ port: PORT });
+const wss = new WebSocketServer({ port: PORT, host: "0.0.0.0" });
 logAction("INFO", `SERVER_START port=${PORT}`);
 
 const clients = new Map<string, Set<WebSocket>>();
@@ -37,8 +37,6 @@ function getLogFileName() {
 async function logAction(type: "INFO" | "WARNING" | "ERROR", text: string) {
 	const timestamp = new Date().toISOString();
 	const log = `[${timestamp}] [${type}] ${text}\n`;
-
-	// console.log(log.trim());
 
 	await fs.mkdir("../src/logs", { recursive: true });
 	await fs.appendFile(getLogFileName(), log);

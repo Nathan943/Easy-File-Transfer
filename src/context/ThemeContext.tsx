@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-export type ThemeMode = "light" | "dark" | "system";
+export type ThemeMode = "light" | "dark";
 
 interface Theme {
 	background: string;
@@ -42,27 +42,20 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 	const [themeMode, setThemeMode] = useState<ThemeMode>(
-		(localStorage.getItem("theme") as ThemeMode) ?? "system",
+		(localStorage.getItem("theme") as ThemeMode) ?? "light",
 	);
-
-	const prefersDark = window.matchMedia(
-		"(prefers-color-scheme: dark)",
-	).matches;
 
 	useEffect(() => {
 		localStorage.setItem("theme", themeMode);
 
-		if (themeMode == "dark" || (themeMode == "system" && prefersDark)) {
+		if (themeMode == "dark") {
 			document.documentElement.setAttribute("data-bs-theme", "dark");
 		} else {
 			document.documentElement.setAttribute("data-bs-theme", "light");
 		}
 	}, [themeMode]);
 
-	const theme =
-		themeMode == "dark" || (themeMode == "system" && prefersDark)
-			? darkTheme
-			: lightTheme;
+	const theme = themeMode == "dark" ? darkTheme : lightTheme;
 
 	return (
 		<ThemeContext.Provider value={{ theme, themeMode, setThemeMode }}>

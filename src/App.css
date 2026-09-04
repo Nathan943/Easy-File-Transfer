@@ -7,7 +7,7 @@
 .mobile-layout {
 	display: none;
 	width: 100%;
-	height: 100vh;
+	height: 100dvh;
 }
 
 @media (max-width: 767px) {
@@ -18,6 +18,6 @@
 	.mobile-layout {
 		display: block;
 		width: 100%;
-		height: 100vh;
+		height: 100dvh;
 	}
 }

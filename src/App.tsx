@@ -33,7 +33,9 @@ const App = () => {
 		online: false,
 	});
 
-	const [serverConnected, setServerConnected] = useState(false);
+	const [serverConnected, setServerConnected] = useState<boolean | null>(
+		null,
+	);
 
 	//For the MainContent component to decide whether to show the pairing menu or not
 	const [activePanel, setActivePanel] = useState<
@@ -296,11 +298,6 @@ const App = () => {
 		await socketHandler.send(file, selectedClient, message.id);
 	};
 
-	useEffect(() => {
-		if (window.innerWidth <= 768) {
-		}
-	}, [window.innerWidth]);
-
 	//Update local storage when a new contact is added
 	useEffect(() => {
 		localStorage.setItem("contacts", JSON.stringify(clients));
@@ -491,7 +488,6 @@ const App = () => {
 
 		socketHandler.onFileReceived(
 			async (client: Client, file: File, messageId: string) => {
-				console.log("file received");
 				//Upload to database
 				if (saveFiles) {
 					await fileStorageHandler.addFile(messageId, file);
@@ -550,7 +546,6 @@ const App = () => {
 		);
 
 		socketHandler.onFileSent((messageId: string) => {
-			console.log("on file sent");
 			editMessage(
 				messageId,
 				undefined,
@@ -640,8 +635,8 @@ const App = () => {
 
 	return (
 		<div>
-			{!serverConnected ? (
-				<div className="vh-100 vw-100 d-flex flex-column align-items-center justify-content-center">
+			{serverConnected == false ? (
+				<div className="vh-100 vw-100 p-3 d-flex flex-column align-items-center justify-content-center">
 					<h1>Server unavailable</h1>
 
 					<h5 className="mt-3 lh-base text-center">
@@ -661,7 +656,6 @@ const App = () => {
 							editName={editName}
 							onSelectClient={(client) => {
 								setSelectedClient(client);
-								console.log("set");
 								setActivePanel("contact");
 							}}
 							togglePairing={() => {
@@ -700,7 +694,6 @@ const App = () => {
 
 					{/* MOBILE LAYOUT */}
 					<div className="mobile-layout">
-						{dragging && selectedClient.id != "" && <DropOverlay />}
 						{mobileScreen == "sidebar" && (
 							<Sidebar
 								clients={clients}

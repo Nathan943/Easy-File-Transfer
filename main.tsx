@@ -6,11 +6,9 @@ import { ThemeProvider } from "./src/context/ThemeContext";
 import { SettingsProvider } from "./src/context/SettingsContext";
 
 createRoot(document.getElementById("root")!).render(
-	<StrictMode>
-		<ThemeProvider>
-			<SettingsProvider>
-				<App />
-			</SettingsProvider>
-		</ThemeProvider>
-	</StrictMode>,
+	<ThemeProvider>
+		<SettingsProvider>
+			<App />
+		</SettingsProvider>
+	</ThemeProvider>,
 );

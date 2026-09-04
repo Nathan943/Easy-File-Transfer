@@ -38,7 +38,6 @@ class FileStorageHandler {
 
 			this.request.onsuccess = (event) => {
 				this.db = (event.target as IDBOpenDBRequest).result;
-				console.log("Database opened");
 
 				resolve();
 			};
@@ -103,7 +102,6 @@ class FileStorageHandler {
 	//Get a file from the database
 	async getFile(fileId: string): Promise<File | null> {
 		if (!this.db) {
-			console.error("Database not found");
 			return null;
 		}
 

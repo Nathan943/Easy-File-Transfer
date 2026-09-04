@@ -7,7 +7,7 @@ import cryptoHandler from "./CryptoHandler";
 import notificationSound from "../sounds/notification.mp3";
 
 //Files are sent in chunks of CHUNK_SIZE
-const CHUNK_SIZE = 1024 * 1024;
+const CHUNK_SIZE = 128 * 1024;
 
 //Handle everything to do with the connection to the server and other clients
 class SocketHandler {
@@ -66,12 +66,11 @@ class SocketHandler {
 
 	//Initialize WebSocket connection
 	connect(authToken: string | null) {
-		this.socket = new WebSocket("ws://localhost:8080");
+		const wsUrl = "wss://ws.nathanpederson.com";
+		this.socket = new WebSocket(wsUrl);
 
 		//Connect to the server and tell it that this client is online
 		this.socket.addEventListener("open", async () => {
-			console.log("CONNECTED");
-
 			this.onConnectionStatusChangeCallback?.(true);
 
 			this.socket?.send(
@@ -123,13 +122,6 @@ class SocketHandler {
 						{ type: file.type },
 					);
 
-					console.log(
-						"Expected:",
-						transfer.file.size,
-						"Received:",
-						reconstructedFile.size,
-					);
-
 					this.onFileReceivedCallback?.(
 						client,
 						reconstructedFile,
@@ -158,8 +150,6 @@ class SocketHandler {
 
 						setTimeout(() => URL.revokeObjectURL(url), 1000);
 					}
-
-					this.updateProgressBarCallback?.(messageId, 1);
 
 					if (this.soundOnDownload) {
 						this.playDownloadSound();
@@ -278,8 +268,6 @@ class SocketHandler {
 					break;
 
 				case "FILE_META":
-					console.log("meta received");
-
 					const incomingFile = {
 						name: parsedMessage.name,
 						type: parsedMessage.type,
@@ -295,8 +283,6 @@ class SocketHandler {
 						receivedBytes: 0,
 						receivedChunks: 0,
 					});
-
-					console.log("Message ID:", parsedMessage.messageId);
 
 					this.onMetaReceivedCallback?.(
 						parsedMessage.client,
@@ -314,17 +300,17 @@ class SocketHandler {
 
 		//Listen for connection close
 		this.socket.addEventListener("close", () => {
-			console.log("DISCONNECTED");
-
-			this.onConnectionStatusChangeCallback?.(false);
+			console.log("reconnecting");
+			this.connect(authToken);
+			setTimeout(() => {
+				if (this.socket?.readyState != WebSocket.OPEN) {
+					this.onConnectionStatusChangeCallback?.(false);
+				}
+			}, 2000);
 		});
 
 		//Listen for connection error
-		this.socket.addEventListener("error", () => {
-			console.log("ERROR");
-
-			this.onConnectionStatusChangeCallback?.(false);
-		});
+		this.socket.addEventListener("error", () => {});
 	}
 
 	//Close the socket connection
@@ -371,7 +357,6 @@ class SocketHandler {
 	}
 
 	playDownloadSound() {
-		console.log("sound played");
 		this.downloadSound.volume = 0.5;
 		this.downloadSound.currentTime = 0;
 		this.downloadSound.play().catch(() => {
@@ -440,7 +425,7 @@ class SocketHandler {
 				packet.set(idBytes);
 				packet.set(encryptedBytes, idBytes.length);
 
-				while (this.socket.bufferedAmount > 4 * 1024 * 1024) {
+				while (this.socket.bufferedAmount > 128 * 1024) {
 					await new Promise((resolve) => setTimeout(resolve, 1));
 				}
 
@@ -460,8 +445,7 @@ class SocketHandler {
 			}
 
 			this.onFileSentCallback?.(messageId);
-		} catch (err) {
-			console.error(err);
+		} catch (e) {
 			this.onFileFailedCallback?.(messageId);
 		}
 	}
